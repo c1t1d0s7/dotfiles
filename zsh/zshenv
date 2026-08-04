@@ -1,0 +1,18 @@
+# ~/.zshenv — 모든 zsh에서 읽힘 (스크립트, `zsh -c` 포함)
+# 환경변수만 여기 둔다. 대화형 전용 설정(alias, 프롬프트)은 .zshrc로.
+
+# Homebrew (Apple Silicon)
+export HOMEBREW_PREFIX="/opt/homebrew"
+
+path=(
+  $HOME/.local/bin        # 직접 설치한 도구
+  $HOME/go/bin
+  $HOMEBREW_PREFIX/bin
+  $HOMEBREW_PREFIX/sbin
+  $path
+)
+# 중복 제거. 배열에 속성으로 붙으므로 .zshrc나 플러그인이 나중에 추가하는 항목에도 적용된다.
+typeset -U path fpath
+
+export LANG=en_US.UTF-8
+export EDITOR=nvim

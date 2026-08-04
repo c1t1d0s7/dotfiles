@@ -1,0 +1,35 @@
+### macOS System Files ###
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 파일 아이콘 (끝에 \r이 포함된 특수 파일 대응)
+Icon?
+
+# 썸네일 캐시 및 인덱싱 데이터
+._*
+.Spotlight-V100
+.fseventsd
+
+# 휴지통 및 임시 항목
+.Trashes
+.TemporaryItems
+.DocumentRevisions-V100
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+### Network & External Storage (AFP/SMB) ###
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### Development Tools (Common) ###
+# 에디터 및 빌드 시 발생하는 임시 파일
+*.swp
+*.out
+*.app
+
+
+**/.claude/settings.local.json

@@ -1,0 +1,40 @@
+# 테마
+theme = dracula
+# 배경 불투명도(0.0 ~ 1.0)
+background-opacity = 0.8
+# 배경 흐림 강도
+background-blur = 50
+
+# 터미널의 가로 너비
+window-width = 75
+# 터미널의 세로 높이
+window-height = 25
+
+# 창의 가로 여백
+window-padding-x = 10
+# 창의 세로 여백
+window-padding-y = 10
+# 창 크기 조절 시 여백을 균형 있게 자동 조정
+window-padding-balance = true
+
+# 폰트 설정
+font-size = 24
+font-family = "JetBrainsMono Nerd Font"
+# 한글 폴백 폰트 (JetBrains Mono에 없는 글자만 여기서 가져옴)
+font-family = "Sarasa Mono K"
+
+# 한글 영역은 무조건 Sarasa Mono K로 강제
+# 음절 / 호환 자모 / 첫가끝 자모 / 확장 A / 확장 B 순
+font-codepoint-map = U+AC00-U+D7A3=Sarasa Mono K
+font-codepoint-map = U+3130-U+318F=Sarasa Mono K
+font-codepoint-map = U+1100-U+11FF=Sarasa Mono K
+font-codepoint-map = U+A960-U+A97F=Sarasa Mono K
+font-codepoint-map = U+D7B0-U+D7FF=Sarasa Mono K
+
+# 쉘 통합 기능을 zsh용으로 활성화
+shell-integration = zsh
+# SSH 접속 시 터미널 정보를 자동 전달
+shell-integration-features = ssh-env, ssh-terminfo
+
+# 붙여넣기 시 확인 팝업을 비활성화
+clipboard-paste-protection = false

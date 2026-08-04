@@ -1,0 +1,23 @@
+# git 신원 파일 — 이름·이메일이 들어있다.
+# install.sh가 ~/.config/git/ 아래에 만들며 리포에는 두지 않는다. 아래는 실수 방지용.
+git/gitconfig-*
+git/identity*
+
+# install.sh 가 읽는 신원 변수 파일 — 이름·이메일이 들어간다
+install.conf
+
+# 비밀정보 — 절대 커밋하지 말 것
+.env
+*.key
+*.pem
+**/hosts.yml          # gh CLI OAuth 토큰
+**/credentials
+**/*token*
+
+# macOS
+.DS_Store
+
+# zsh 런타임 산출물
+.zcompdump*
+.zsh_history
+.zsh_sessions/
