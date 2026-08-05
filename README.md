@@ -47,7 +47,10 @@ git/
 ├── gitignore_global        → ~/.config/git/ignore
 └── gitmessage              → ~/.config/git/message   커밋 템플릿
 ghostty/config.ghostty       → ~/.config/ghostty/
-Brewfile                                       brew bundle dump 결과
+vscode/
+├── settings.json           → ~/Library/Application Support/Code/User/settings.json
+└── keybindings.json        → ~/Library/Application Support/Code/User/keybindings.json
+Brewfile                                       brew bundle dump 결과 (VS Code 확장 목록 포함)
 ```
 
 리포에 없고 `install.sh`가 `~/.config/zsh` 아래에 직접 받는 것:
@@ -69,6 +72,35 @@ ghostty는 설정을 **두 곳에서 읽고 나중 것이 이깁니다** — XDG
 
 파일명은 `config.ghostty`입니다. ghostty 1.2.3부터 바뀐 이름이고 그 전에는
 `config`였습니다 — 예전 이름의 파일도 같이 치웁니다.
+
+### VS Code 설정이 `~/Library/Application Support/`에 있는 이유
+
+**VS Code는 macOS에서 XDG를 보지 않습니다.** `~/.config/Code`를 만들어도 읽지 않고,
+사용자 설정 경로는 `~/Library/Application Support/Code/User/` 한 곳뿐입니다. ghostty·git처럼
+`~/.config` 아래로 맞출 수가 없어서 이것만 경로가 다릅니다.
+
+**확장(extension)은 이 디렉터리가 아니라 `Brewfile`이 관리합니다.** `brew bundle dump`가
+설치된 확장을 `vscode "publisher.name"` 줄로 뽑아주고, `brew bundle install`이 그대로 깝니다.
+확장을 추가·삭제했으면 설정 파일이 아니라 Brewfile을 다시 dump 하세요.
+
+두 파일 모두 JSONC라 **주석을 써도 됩니다.** 설정 UI에서 값을 바꿔도 VS Code가 주석을
+지우지 않습니다. 다만 UI로 새로 추가한 항목은 파일 **맨 끝에** 붙으므로, 리포로 되가져올 때
+알맞은 구역으로 옮겨주는 편이 좋습니다.
+
+**기본값과 같은 값은 넣지 않습니다.** 동작은 그대로면서 무엇을 일부러 바꿨는지만 가려집니다.
+설정 UI에서 항목 왼쪽에 파란 줄이 없으면 기본값이고, 확장 설정은
+`~/.vscode/extensions/<확장>/package.json`의 `default`로 확인합니다.
+
+예외가 하나 있습니다. `yaml.disableSchemaDetection`은 **확장이 스스로 써넣는 값**입니다
+(`redhat.vscode-yaml`이 `github.vscode-github-actions` 설치 여부에 따라 글롭을 넣고 뺍니다).
+리포에서 빼면 VS Code가 다시 써넣어 `./install.sh --dry`가 영영 `(differs)`로 뜨므로,
+확장이 만드는 값 그대로 둡니다.
+
+> 설정 파일을 VS Code 편집기에 열어둔 채 `./install.sh`를 돌리면, 디스크가 바뀐 걸
+> 감지해 편집기 내용이 갱신됩니다. 저장 안 한 수정이 있다면 먼저 정리하세요.
+
+`snippets/`, `profiles/`, `globalStorage/` 등 나머지는 추적하지 않습니다 — 대부분 VS Code가
+스스로 쓰는 상태 파일입니다. 스니펫을 관리하고 싶어지면 `install.sh`의 `FILES`에 줄을 더하세요.
 
 ### git 설정이 `~/.config/git/`에 있는 이유
 
@@ -242,7 +274,10 @@ vi zsh/zshrc
 # 홈 쪽에서 먼저 고쳐버렸다면 리포로 되가져오기
 cp ~/.zshrc zsh/zshrc && git diff
 
-# 패키지 목록 갱신
+# VS Code 설정은 UI로 고치게 되므로 되가져올 일이 잦다 (경로에 공백 — 따옴표 필수)
+cp "$HOME/Library/Application Support/Code/User/settings.json" vscode/settings.json && git diff
+
+# 패키지 목록 갱신 (VS Code 확장 목록도 여기서 같이 갱신된다)
 brew bundle dump --force --file=Brewfile
 
 # 플러그인/테마 업데이트 (install.sh가 알아서 pull 한다)

@@ -1,0 +1,70 @@
+// VS Code 사용자 설정 → ~/Library/Application Support/Code/User/settings.json
+// 확장(extension) 목록은 여기가 아니라 Brewfile의 vscode "..." 줄이 관리한다.
+//
+// 이 파일은 JSONC라 주석을 써도 된다. 설정 UI로 값을 바꿔도 VS Code가 주석을
+// 지우지 않는다. 다만 UI로 추가한 항목은 파일 맨 끝에 붙으므로,
+// 리포로 되가져올 때(cp) 알맞은 구역으로 옮겨줄 것.
+//
+// **기본값과 같은 값은 적지 않는다.** 적어봐야 동작은 그대로인데 무엇을 일부러
+// 바꿨는지만 안 보이게 된다. 설정 UI에서 항목 왼쪽에 파란 줄이 없으면 기본값이다.
+// 확장 설정은 ~/.vscode/extensions/<확장>/package.json 의 default 를 보면 된다.
+{
+    // ── 폰트 ──────────────────────────────────────────────────────────────
+    // Nerd Font를 먼저 두고 한글은 Sarasa Mono K로 폴백한다(ghostty와 같은 조합).
+    "editor.fontFamily": "'MesloLGM Nerd Font', 'Sarasa Mono K'",
+    "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font', 'Sarasa Mono K'",
+    // 크기는 영역마다 기본값이 따로 있다(13, 14, ...). 하나만 바꾸면
+    // 채팅·커밋 입력창만 작게 남으므로 쓰는 곳을 전부 적어준다.
+    "editor.fontSize": 16,
+    "terminal.integrated.fontSize": 16,
+    "chat.fontSize": 16,
+    "chat.editor.fontSize": 16,
+    "scm.inputFontSize": 16,
+    "markdown.preview.fontSize": 16,
+    "window.zoomLevel": 1,
+
+    // ── 테마 ──────────────────────────────────────────────────────────────
+    // 라이트/다크 모두 Dracula를 쓸 거라면 colorTheme 한 줄이면 끝이다.
+    // window.autoDetectColorScheme + preferredDark/LightColorTheme 조합은
+    // 둘을 다르게 둘 때만 의미가 있다(macOS 외관 따라 전환).
+    "workbench.colorTheme": "Dracula Theme",
+    "workbench.iconTheme": "material-icon-theme",
+
+    // ── 편집기 · 파일 ─────────────────────────────────────────────────────
+    // 기본값 "auto"는 macOS에서 이미 \n 이다. Windows 원격(Remote-SSH 등)에
+    // 붙었을 때만 실제로 달라진다 — 의도를 못 박아두는 줄에 가깝다.
+    "files.eol": "\n",
+    "workbench.startupEditor": "none",
+    // 기본값 "auto"는 스크린리더가 붙으면 편집기를 접근성 모드로 바꾼다.
+    // "off"는 "스크린리더 없음"으로 못 박는다. 곁가지로 소리도 같이 꺼진다 —
+    // accessibility.signals.* 의 기본값 "auto"가 "스크린리더가 붙었을 때만 재생"
+    // 이라서, 이 줄 하나면 신호음 20여 개를 따로 끌 필요가 없다.
+    "editor.accessibilitySupport": "off",
+
+    // ── 확인창 끄기 ───────────────────────────────────────────────────────
+    "explorer.confirmDragAndDrop": false,
+    "explorer.confirmDelete": false,
+    "explorer.confirmPasteNative": false,
+    "terminal.integrated.enableMultiLinePasteWarning": "never",
+
+    // ── git ───────────────────────────────────────────────────────────────
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+
+    // ── 언어 · 도구별 ─────────────────────────────────────────────────────
+    // 아래 6개는 redhat.vscode-yaml이 스스로 써넣는 값이다. github.vscode-github-actions
+    // 가 깔려 있는 동안 이 글롭들을 자동으로 넣고, 확장을 지우면 도로 빼간다.
+    // 손으로 고치거나 지워도 VS Code를 다시 켜면 원래대로 돌아온다 — 리포에서 빼면
+    // ./install.sh --dry 가 영영 "(differs)"로 뜨므로 확장이 만드는 값 그대로 둔다.
+    "yaml.disableSchemaDetection": [
+        "**/.github/workflows/*.yml",
+        "**/.github/workflows/*.yaml",
+        "**/.gitea/workflows/*.yml",
+        "**/.gitea/workflows/*.yaml",
+        "**/.forgejo/workflows/*.yml",
+        "**/.forgejo/workflows/*.yaml"
+    ],
+    "go.toolsManagement.autoUpdate": true,
+    "makefile.configureOnOpen": false
+}

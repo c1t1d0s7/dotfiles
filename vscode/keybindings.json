@@ -1,0 +1,21 @@
+// VS Code 키 바인딩 → ~/Library/Application Support/Code/User/keybindings.json
+// 기본 바인딩을 덮어쓰는 것만 적는다. 전체 목록은 Cmd+K Cmd+S 로 볼 것.
+[
+    // 통합 터미널에서 Shift+Enter → 줄 끝에 백슬래시를 붙이고 다음 줄로.
+    // 긴 명령을 여러 줄로 이어 쓸 때 쓴다. 실행은 그냥 Enter.
+    //
+    // args.text는 JSON 문자열이라 한 번 더 이스케이프된다 — "\\\r" 이 터미널에는
+    // 백슬래시 + CR(Enter) 두 글자로 나간다. zsh는 줄 끝 백슬래시를 줄 잇기로 보고
+    // PS2 프롬프트로 넘어간다.
+    //
+    // 여기에 \n 을 덧붙이면 안 된다. CR과 LF 둘 다 zsh에서는 accept-line이라,
+    // 백슬래시로 이어붙인 줄을 LF가 곧바로 실행해버린다(= Shift+Enter가 그냥 Enter).
+    {
+        "key": "shift+enter",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": {
+            "text": "\\\r"
+        },
+        "when": "terminalFocus"
+    }
+]

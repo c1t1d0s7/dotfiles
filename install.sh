@@ -75,6 +75,11 @@ ZSH_CUSTOM_DIR="$HOME/.config/zsh"
 #   message  기본값은 없다. gitconfig의 commit.template이 이 경로를 가리킨다.
 # 리포의 git/gitconfig 안에도 이 경로가 문자열로 박혀 있으므로 둘이 어긋나면 안 된다.
 GIT_CONFIG_DIR="$HOME/.config/git"
+# VS Code는 macOS에서 XDG를 보지 않는다. 사용자 설정 경로는 이 한 곳뿐이라
+# 다른 설정들처럼 ~/.config 아래로 맞출 수가 없다(경로에 공백이 들어간다).
+# VS Code가 아직 없어도 그냥 둔다 — 나중에 brew bundle로 깔면 이미 적용된 상태가 된다.
+# 확장 목록은 여기가 아니라 Brewfile의 vscode "..." 줄이 관리한다.
+VSCODE_DIR="$HOME/Library/Application Support/Code/User"
 
 # 복사 목록: "리포 내 경로:목적지"
 # $ZSH_CUSTOM_DIR/*.zsh 는 개수가 늘어날 수 있어 아래에서 따로 훑는다.
@@ -86,6 +91,8 @@ FILES=(
   "git/gitconfig:$GIT_CONFIG_DIR/config"
   "git/gitignore_global:$GIT_CONFIG_DIR/ignore"
   "git/gitmessage:$GIT_CONFIG_DIR/message"
+  "vscode/settings.json:$VSCODE_DIR/settings.json"
+  "vscode/keybindings.json:$VSCODE_DIR/keybindings.json"
 )
 
 copy() {
