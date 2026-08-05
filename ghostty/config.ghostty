@@ -18,7 +18,7 @@ window-padding-y = 10
 window-padding-balance = true
 
 # 폰트 설정
-font-size = 24
+font-size = 22
 font-family = "JetBrainsMono Nerd Font"
 # 한글 폴백 폰트 (JetBrains Mono에 없는 글자만 여기서 가져옴)
 font-family = "Sarasa Mono K"
