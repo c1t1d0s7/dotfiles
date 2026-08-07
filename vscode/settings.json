@@ -15,12 +15,12 @@
     "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font', 'Sarasa Mono K'",
     // 크기는 영역마다 기본값이 따로 있다(13, 14, ...). 하나만 바꾸면
     // 채팅·커밋 입력창만 작게 남으므로 쓰는 곳을 전부 적어준다.
-    "editor.fontSize": 14,
-    "terminal.integrated.fontSize": 14,
-    "chat.fontSize": 14,
-    "chat.editor.fontSize": 14,
-    "scm.inputFontSize": 14,
-    "markdown.preview.fontSize": 14,
+    "editor.fontSize": 12,
+    "terminal.integrated.fontSize": 12,
+    "chat.fontSize": 12,
+    "chat.editor.fontSize": 12,
+    "scm.inputFontSize": 12,
+    "markdown.preview.fontSize": 12,
     "window.zoomLevel": 1,
 
     // ── 테마 ──────────────────────────────────────────────────────────────
