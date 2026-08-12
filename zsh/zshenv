@@ -15,4 +15,10 @@ path=(
 typeset -U path fpath
 
 export LANG=en_US.UTF-8
-export EDITOR=nvim
+# nvim이 아직 안 깔린 상태(install.sh만 돌리고 brew bundle 전)에서도 편집기가 있어야 하므로
+# 없으면 vi로 떨어진다. vi는 macOS에 항상 있다.
+if (( $+commands[nvim] )); then
+  export EDITOR=nvim
+else
+  export EDITOR=vi
+fi

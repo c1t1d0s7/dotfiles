@@ -8,7 +8,8 @@
 
 [core]
 	pager = less -FRX          # 한 화면에 들어오면 그냥 출력, 넘치면 페이징
-	editor = code --wait
+	# editor는 적지 않는다. git이 $EDITOR(zshenv가 nvim 또는 vi로 정한다)를 쓰고,
+	# 그마저 없는 GUI 환경에서는 git 자체 기본값인 vi로 떨어진다.
 	autocrlf = input
 	# excludesfile은 적지 않는다. ~/.config/git/ignore 가 git의 기본값이다.
 
