@@ -5,7 +5,7 @@
 alias cat="bat --style=plain --paging=never"
 
 # ls 대체
-alias ls="eza --icons"
+alias ls="eza --icons=auto"
 alias ll="eza --long --color=always --color-scale --icons --group-directories-first --group --git --time-style=long-iso"
 alias la="eza --long --color=always --color-scale --icons --group-directories-first --group --git --time-style=long-iso --all"
 alias lt="eza --icons --tree"
