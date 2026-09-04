@@ -5,8 +5,8 @@
 export HOMEBREW_PREFIX="/opt/homebrew"
 
 path=(
-  $HOME/.local/bin        # 직접 설치한 도구
   $HOME/go/bin
+  $HOME/.local/bin        # 직접 설치한 도구
   $HOMEBREW_PREFIX/bin
   $HOMEBREW_PREFIX/sbin
   $path
