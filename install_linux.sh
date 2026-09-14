@@ -155,6 +155,11 @@ install_oh_my_posh() {
     return 0
   fi
 
+  if ! mkdir -p "$HOME/.local/bin"; then
+    echo "failed to create $HOME/.local/bin" >&2
+    return 1
+  fi
+
   installer="$(mktemp "${TMPDIR:-/tmp}/oh-my-posh-install.XXXXXX")"
   if ! curl -fsSL https://ohmyposh.dev/install.sh -o "$installer"; then
     rm -f "$installer"
