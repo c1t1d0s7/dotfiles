@@ -9,7 +9,7 @@ git clone https://github.com/c1t1d0s7/dotfiles.git
 cd dotfiles
 ./install.sh --dry     # 무엇이 바뀌는지 먼저 확인
 ./install.sh           # oh-my-zsh + 플러그인 클론 + 설정 파일 복사
-brew bundle install --file=Brewfile
+brew bundle install --file=Brewfile  # oh-my-posh를 포함한 패키지 설치
 ```
 
 git 커밋 신원(계정·이름·이메일)은 실행 중에 물어봅니다. 미리 파일이나 환경변수로
@@ -23,10 +23,12 @@ git 커밋 신원(계정·이름·이메일)은 실행 중에 물어봅니다. �
 - **oh-my-zsh 본체** → `~/.oh-my-zsh`. `.zshrc`가 이걸 소싱하므로 없으면
   프롬프트·플러그인은 물론 `$ZSH_CUSTOM/*.zsh`의 alias까지 통째로 안 뜹니다.
 - **zsh 플러그인 3개** → `~/.config/zsh/plugins/`
-- **powerlevel10k** → `~/.config/zsh/themes/`
 
 이미 있으면 `git pull`로 갱신하므로 재실행해도 안전합니다.
 하나가 실패해도 나머지와 설정 파일 복사는 그대로 진행하고, 마지막에 몇 개 실패했는지 알려주며 exit 1 합니다.
+
+프롬프트 엔진 **oh-my-posh**는 `Brewfile`로 설치하고, 이 리포의 설정을
+`~/.config/oh-my-posh/config.omp.json`으로 복사합니다.
 
 기존 파일은 덮어쓰지 않고 `~/.dotfiles-backup/<타임스탬프>/`로 옮깁니다.
 
@@ -38,10 +40,11 @@ git 커밋 신원(계정·이름·이메일)은 실행 중에 물어봅니다. �
 zsh/
 ├── zshenv                  → ~/.zshenv        PATH, EDITOR, LANG (모든 zsh)
 ├── zshrc                   → ~/.zshrc         OMZ 뼈대 (대화형 셸)
-├── p10k.zsh                → ~/.p10k.zsh      프롬프트 외형
 └── custom/*.zsh            → ~/.config/zsh/   $ZSH_CUSTOM, OMZ가 자동 소싱
     ├── 10-aliases.zsh
     └── 20-history.zsh
+oh-my-posh/
+└── config.omp.json         → ~/.config/oh-my-posh/config.omp.json
 git/
 ├── gitconfig               → ~/.config/git/config
 ├── gitignore_global        → ~/.config/git/ignore
@@ -57,8 +60,7 @@ Brewfile                                       brew bundle dump 결과 (VS Code 
 
 ```
 ~/.config/zsh/
-├── plugins/{zsh-autosuggestions,zsh-completions,zsh-syntax-highlighting}/
-└── themes/powerlevel10k/
+└── plugins/{zsh-autosuggestions,zsh-completions,zsh-syntax-highlighting}/
 ```
 
 ### ghostty 설정이 `~/.config/ghostty/`에 있는 이유
@@ -246,7 +248,7 @@ PATH를 `.zshrc`에 두면 스크립트에서 homebrew 도구를 못 찾습니�
 
 oh-my-zsh는 `$ZSH_CUSTOM/*.zsh`를 알파벳 순으로 자동 소싱합니다(플러그인 로드 후, 테마 로드 전).
 기본값 `~/.oh-my-zsh/custom` 대신 `~/.config/zsh`를 쓰므로,
-**플러그인과 테마도 이 아래**에 있어야 합니다. 없으면 조용히 로드되지 않습니다.
+**플러그인도 이 아래**에 있어야 합니다. 없으면 조용히 로드되지 않습니다.
 
 파일명 앞의 번호는 소싱 순서용입니다.
 
@@ -280,7 +282,7 @@ cp "$HOME/Library/Application Support/Code/User/settings.json" vscode/settings.j
 # 패키지 목록 갱신 (VS Code 확장 목록도 여기서 같이 갱신된다)
 brew bundle dump --force --file=Brewfile
 
-# 플러그인/테마 업데이트 (install.sh가 알아서 pull 한다)
+# 플러그인 업데이트 (install.sh가 알아서 pull 한다)
 ./install.sh
 ```
 

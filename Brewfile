@@ -52,6 +52,8 @@ brew "minikube"
 brew "mole"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
+# Prompt theme engine for any shell
+brew "oh-my-posh"
 # Command-line shell and scripting language
 brew "powershell"
 # Easiest, most secure way to use WireGuard and 2FA

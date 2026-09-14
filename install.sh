@@ -69,6 +69,8 @@ GHOSTTY_DIR="$HOME/.config/ghostty"
 GHOSTTY_LEGACY_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
 # .zshrc의 $ZSH_CUSTOM과 반드시 같아야 한다. 플러그인/테마도 이 아래에 있어야 로드된다.
 ZSH_CUSTOM_DIR="$HOME/.config/zsh"
+# oh-my-posh 프롬프트 설정. .zshrc에 같은 경로가 들어 있다.
+OH_MY_POSH_DIR="$HOME/.config/oh-my-posh"
 # git 설정은 홈 최상위 대신 여기에 모은다. 파일명은 git이 정한 것을 따른다:
 #   config   ~/.gitconfig 대신 읽힌다(단, ~/.gitconfig가 있으면 그쪽이 이긴다)
 #   ignore   core.excludesFile의 기본값이라 설정 없이 그냥 먹는다
@@ -86,7 +88,7 @@ VSCODE_DIR="$HOME/Library/Application Support/Code/User"
 FILES=(
   "zsh/zshenv:$HOME/.zshenv"
   "zsh/zshrc:$HOME/.zshrc"
-  "zsh/p10k.zsh:$HOME/.p10k.zsh"
+  "oh-my-posh/config.omp.json:$OH_MY_POSH_DIR/config.omp.json"
   "ghostty/config.ghostty:$GHOSTTY_DIR/config.ghostty"
   "git/gitconfig:$GIT_CONFIG_DIR/config"
   "git/gitignore_global:$GIT_CONFIG_DIR/ignore"
@@ -482,16 +484,15 @@ echo "oh-my-zsh:"
 clone_or_pull "https://github.com/ohmyzsh/ohmyzsh.git" "$HOME/.oh-my-zsh"
 echo
 
-# 서드파티 플러그인/테마는 리포 밖, $ZSH_CUSTOM 아래에 직접 받는다.
+# 서드파티 플러그인은 리포 밖, $ZSH_CUSTOM 아래에 직접 받는다.
 # URL에 ':'가 들어가므로 구분자는 '|'
 REPOS=(
   "https://github.com/zsh-users/zsh-autosuggestions.git|$ZSH_CUSTOM_DIR/plugins/zsh-autosuggestions"
   "https://github.com/zsh-users/zsh-completions.git|$ZSH_CUSTOM_DIR/plugins/zsh-completions"
   "https://github.com/zsh-users/zsh-syntax-highlighting.git|$ZSH_CUSTOM_DIR/plugins/zsh-syntax-highlighting"
-  "https://github.com/romkatv/powerlevel10k.git|$ZSH_CUSTOM_DIR/themes/powerlevel10k"
 )
 
-echo "zsh plugins/themes ($ZSH_CUSTOM_DIR):"
+echo "zsh plugins ($ZSH_CUSTOM_DIR):"
 for entry in "${REPOS[@]}"; do
   clone_or_pull "${entry%%|*}" "${entry#*|}"
 done
