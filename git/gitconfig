@@ -2,55 +2,42 @@
 	defaultBranch = main
 
 [user]
-	# 이름·이메일은 아래 include가 주입한다. 공개 리포이므로 리포에 두지 않는다.
-	# 기본 신원은 일부러 없다 — ~/git/<계정>/ 밖에서는 커밋이 거부된다.
-	useConfigOnly = true       # 이메일을 못 찾으면 사용자@호스트명 으로 추측하지 말고 커밋을 거부
+	# Identities are injected per ~/git/<account>/ by the include below.
+	useConfigOnly = true
 
 [core]
-	pager = less -FRX          # 한 화면에 들어오면 그냥 출력, 넘치면 페이징
-	# editor는 적지 않는다. git이 $EDITOR(zshenv가 nvim 또는 vi로 정한다)를 쓰고,
-	# 그마저 없는 GUI 환경에서는 git 자체 기본값인 vi로 떨어진다.
+	pager = less -FRX
 	autocrlf = input
-	# excludesfile은 적지 않는다. ~/.config/git/ignore 가 git의 기본값이다.
 
-[credential]
-	helper = osxkeychain
-
-# 신원 설정. 이름·이메일·조직명은 사람마다 다르고 공개 리포에 둘 것도 아니므로
-# 리포에 두지 않는다. install.sh가 물어봐서 아래 파일들을 만든다.
-#
-#   ~/.config/git/identity         개인 이름/이메일 + 조직별 includeIf
-#   ~/.config/git/identity-<조직>  ~/git/<조직>/ 아래에서만 덮어쓸 이름/이메일
-#
-# includeIf는 include된 파일 안에서도 동작하므로, 조직 목록 전체가 저 한 파일에 들어간다.
+# Generated identity and includeIf rules.
 [include]
 	path = ~/.config/git/identity
 
 [pull]
 	rebase = true
 [rebase]
-	autoSquash = true          # fixup!/squash! 커밋을 대화형 rebase에서 자동 정렬
+	autoSquash = true
 	autoStash = true
-	missingCommitsCheck = warn # todo 줄을 실수로 지워 커밋이 누락되면 경고
+	missingCommitsCheck = warn
 [rerere]
-	enabled = true             # 충돌 해결을 기록해뒀다가 재사용. rebase 반복 시 효과 큼
+	enabled = true
 
 [merge]
-	conflictstyle = zdiff3     # 충돌 마커에 공통 조상까지 표시
+	conflictstyle = zdiff3
 
 [diff]
 	algorithm = histogram
-	colorMoved = default       # 이동한 코드와 실제 수정된 코드를 구분
+	colorMoved = default
 
 [commit]
 	template = ~/.config/git/message
-	verbose = true             # 커밋 메시지 작성 시 diff를 함께 표시
+	verbose = true
 
 [branch]
-	sort = -committerdate      # 최근 커밋된 브랜치를 위로
+	sort = -committerdate
 
 [tag]
-	sort = version:refname     # v2.10을 v2.9 뒤에 두는 자연스러운 버전 정렬
+	sort = version:refname
 
 [push]
 	default = current
@@ -60,16 +47,15 @@
 	prune = true
 
 [help]
-	autocorrect = prompt       # 오타 교정을 자동 실행하지 않고 확인 후 실행
+	autocorrect = prompt
 
 [color]
 	ui = auto
 
 [column]
-	ui = auto                 # branch·tag 등의 긴 목록을 터미널 너비에 맞춰 표시
+	ui = auto
 
-# 기본 git log도 읽기 쉬운 한 줄 형식으로 표시한다.
-# 해시 | 상대 시각 | 제목 | 작성자 | 브랜치·태그 순서다.
+# hash | relative date | subject | author | refs
 [log]
 	date = relative
 	decorate = auto

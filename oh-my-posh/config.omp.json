@@ -58,7 +58,7 @@
           "style": "powerline",
           "foreground": "p:foreground",
           "background": "p:session",
-          "template": " {{ .UserName }} ",
+          "template": " {{ .UserName }}@{{ .HostName }} ",
           "powerline_symbol": "\ue0b0"
         },
         {

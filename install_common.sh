@@ -1,31 +1,15 @@
 #!/usr/bin/env bash
-# dotfiles 설치 — 홈 디렉토리로 설정 파일을 복사한다. macOS 전용.
-#
-#   ./install.sh                    실제 적용
-#   ./install.sh --dry              무엇을 할지만 출력
-#   ./install.sh --config FILE      신원 변수를 파일에서 읽는다 (기본: ./install.conf)
-#
-# 복사 방식이므로 리포를 고친 뒤 반드시 다시 실행해야 반영된다.
-# 반대로 ~/.zshrc 등을 직접 고치면 리포에 반영되지 않는다.
-# `./install.sh --dry` 가 어긋난 파일을 "(differs)"로 알려주므로,
-# 편집 방향이 헷갈릴 때 먼저 확인할 것.
-#
-# 출력은 영어로 통일한다. 주석과 생성 파일의 설명만 한국어다.
+# Shared installer used by the OS-specific entry points.
 set -euo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 DRY=false
 
-# 신원 변수. 값이 있으면 그대로 쓰고, 비어 있으면 물어본다.
-#   개인 계정  GIT_PERSONAL_ACCOUNT GIT_PERSONAL_NAME GIT_PERSONAL_EMAIL
-#   조직       GIT_ORG_ACCOUNT      GIT_ORG_NAME      GIT_ORG_EMAIL
-# 우선순위는 환경변수 > 설정 파일 > 입력. 조직을 둘 이상 두려면 대화형으로 계속 물어본다.
+# Environment > config file > prompt.
 CONF_VARS="GIT_PERSONAL_ACCOUNT GIT_PERSONAL_NAME GIT_PERSONAL_EMAIL
 GIT_ORG_ACCOUNT GIT_ORG_NAME GIT_ORG_EMAIL"
 
-# 설정 파일 위치. --config 로 바꾸거나 $DOTFILES_CONF 로 지정할 수 있다.
-# 리포 안에 두더라도 이메일이 들어가므로 .gitignore에 걸려 있다.
 CONF="${DOTFILES_CONF:-$DOTFILES/install.conf}"
 CONF_GIVEN=false
 
@@ -41,12 +25,32 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-# 설정 파일은 셸 조각이라 그대로 source 한다. 즉 임의의 명령이 실행될 수 있으니
-# 남이 준 파일을 그냥 넘기지 말 것. 이미 들어온 환경변수가 파일보다 우선한다.
+# Internal override used by the OS-specific entry points.
+PLATFORM="${DOTFILES_INSTALL_TARGET:-}"
+INSTALL_COMMAND="${DOTFILES_INSTALL_COMMAND:-installer}"
+case "$PLATFORM" in
+  macos)
+    [[ "$(uname -s)" == Darwin ]] || {
+      echo "install_macos.sh is for macOS" >&2
+      exit 1
+    }
+    ;;
+  linux)
+    [[ "$(uname -s)" == Linux ]] || {
+      echo "install_linux.sh is for Linux" >&2
+      exit 1
+    }
+    ;;
+  *)
+    echo "run install_macos.sh or install_linux.sh" >&2
+    exit 2
+    ;;
+esac
+
+# The config is sourced as shell code. Existing environment values win.
 load_conf() {
   local f="$1" v
   if [[ ! -f "$f" ]]; then
-    # 직접 지정한 파일이 없으면 조용히 넘어가면 안 된다.
     $CONF_GIVEN && { echo "config file not found: $f" >&2; exit 2; }
     return 0
   fi
@@ -62,40 +66,30 @@ load_conf() {
 CONF_LOADED=""
 load_conf "$CONF"
 
-# ghostty는 XDG 경로를 먼저, macOS의 Application Support를 나중에 읽고 나중 것이 이긴다.
-# 그래서 예전 위치의 파일을 반드시 치워야 한다(migrate_ghostty_to_xdg).
-# 파일명은 1.2.3부터 config.ghostty 다. 그 전에는 config 였다.
 GHOSTTY_DIR="$HOME/.config/ghostty"
 GHOSTTY_LEGACY_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
-# .zshrc의 $ZSH_CUSTOM과 반드시 같아야 한다. 플러그인/테마도 이 아래에 있어야 로드된다.
 ZSH_CUSTOM_DIR="$HOME/.config/zsh"
-# oh-my-posh 프롬프트 설정. .zshrc에 같은 경로가 들어 있다.
 OH_MY_POSH_DIR="$HOME/.config/oh-my-posh"
-# git 설정은 홈 최상위 대신 여기에 모은다. 파일명은 git이 정한 것을 따른다:
-#   config   ~/.gitconfig 대신 읽힌다(단, ~/.gitconfig가 있으면 그쪽이 이긴다)
-#   ignore   core.excludesFile의 기본값이라 설정 없이 그냥 먹는다
-#   message  기본값은 없다. gitconfig의 commit.template이 이 경로를 가리킨다.
-# 리포의 git/gitconfig 안에도 이 경로가 문자열로 박혀 있으므로 둘이 어긋나면 안 된다.
 GIT_CONFIG_DIR="$HOME/.config/git"
-# VS Code는 macOS에서 XDG를 보지 않는다. 사용자 설정 경로는 이 한 곳뿐이라
-# 다른 설정들처럼 ~/.config 아래로 맞출 수가 없다(경로에 공백이 들어간다).
-# VS Code가 아직 없어도 그냥 둔다 — 나중에 brew bundle로 깔면 이미 적용된 상태가 된다.
-# 확장 목록은 여기가 아니라 Brewfile의 vscode "..." 줄이 관리한다.
 VSCODE_DIR="$HOME/Library/Application Support/Code/User"
 
-# 복사 목록: "리포 내 경로:목적지"
-# $ZSH_CUSTOM_DIR/*.zsh 는 개수가 늘어날 수 있어 아래에서 따로 훑는다.
+# Format: repository path:destination.
 FILES=(
   "zsh/zshenv:$HOME/.zshenv"
   "zsh/zshrc:$HOME/.zshrc"
   "oh-my-posh/config.omp.json:$OH_MY_POSH_DIR/config.omp.json"
-  "ghostty/config.ghostty:$GHOSTTY_DIR/config.ghostty"
   "git/gitconfig:$GIT_CONFIG_DIR/config"
   "git/gitignore_global:$GIT_CONFIG_DIR/ignore"
   "git/gitmessage:$GIT_CONFIG_DIR/message"
-  "vscode/settings.json:$VSCODE_DIR/settings.json"
-  "vscode/keybindings.json:$VSCODE_DIR/keybindings.json"
 )
+
+if [[ "$PLATFORM" == macos ]]; then
+  FILES+=(
+    "ghostty/config.ghostty:$GHOSTTY_DIR/config.ghostty"
+    "vscode/settings.json:$VSCODE_DIR/settings.json"
+    "vscode/keybindings.json:$VSCODE_DIR/keybindings.json"
+  )
+fi
 
 copy() {
   local src="$DOTFILES/$1" dst="$2"
@@ -105,8 +99,7 @@ copy() {
     return
   fi
 
-  # 내용이 같은 실제 파일이면 손대지 않는다.
-  # 심볼릭 링크는 내용이 같아도 교체 대상이다(예전 방식에서 넘어오는 경우).
+  # Replace legacy symlinks even when their contents match.
   if [[ -f "$dst" && ! -L "$dst" ]] && cmp -s "$src" "$dst"; then
     echo "  unchanged: $dst"
     return
@@ -123,11 +116,7 @@ copy() {
     return
   fi
 
-  # 기존 파일/링크는 백업으로 옮긴다.
-  # cp 전에 반드시 치워야 한다. dst가 심볼릭 링크로 남아 있으면 cp가 링크를 따라가서,
-  #  - 링크가 딴 데를 가리키면: 그 엉뚱한 파일을 덮어쓰고 dst는 링크인 채로 남는다
-  #  - 링크가 src를 가리키면:   cp가 "identical"로 exit 1 -> set -e에 스크립트가 죽는다
-  # 예전 심볼릭 링크 방식에서 넘어올 때 정확히 이 상황이다.
+  # Move the destination first so cp never follows a legacy symlink.
   if [[ -e "$dst" || -L "$dst" ]]; then
     mkdir -p "$BACKUP"
     mv "$dst" "$BACKUP/$(basename "$dst")"
@@ -139,9 +128,9 @@ copy() {
   echo "  copy: $dst"
 }
 
-FAILED=0   # 배열 대신 카운터 — macOS 기본 bash 3.2는 set -u에서 빈 배열 전개가 에러다
+FAILED=0   # Compatible with the Bash 3.2 bundled with macOS.
 
-# git 리포를 받거나(없으면) 갱신한다(있으면). 실패해도 스크립트를 죽이지 않는다.
+# Clone missing repositories and fast-forward existing ones.
 clone_or_pull() {
   local url="$1" dir="$2"
   local name
@@ -161,8 +150,7 @@ clone_or_pull() {
     return
   fi
 
-  # 임시 경로에 받아서 성공했을 때만 교체한다.
-  # 곧바로 rm -rf "$dir" 하면 클론이 실패했을 때 기존 내용만 날린다.
+  # Replace the target only after a successful clone.
   local tmp="$dir.tmp.$$"
   rm -rf "$tmp"
   if git clone -q --depth=1 "$url" "$tmp"; then
@@ -171,38 +159,21 @@ clone_or_pull() {
     echo "  clone: $name"
   else
     rm -rf "$tmp"
-    # 여기서 죽지 않는다 — 설정 복사는 진행하고 나중에 재실행할 수 있게.
     echo "  failed: $name (skipped)"
     FAILED=$((FAILED + 1))
   fi
 }
 
-# ── git 신원 ─────────────────────────────────────────────────────────────────
-# 신원은 GitHub 계정/조직 하나당 하나다. 그 이름이 곧 디렉토리이자 파일명이다:
-#
-#   ~/git/<계정>/                        여기 있는 리포만 그 신원으로 커밋된다
-#   $GIT_CONFIG_DIR/identity             includeIf 목록 (기본 [user]는 일부러 없다)
-#   $GIT_CONFIG_DIR/identity-<계정>      그 계정의 이름/이메일
-#
-# 기본 신원을 두지 않으므로 ~/git/<계정>/ 밖에서는 커밋이 거부된다(useConfigOnly).
-# 조용히 엉뚱한 이메일로 커밋되느니 멈추는 편이 낫다. 그 리포에만 쓰려면
-# --global 없이 `git config user.email ...` 로 지정한다.
-#
-# 값에도 기본값을 두지 않는다. 엔터로 넘긴 값이 커밋에 박히는 것보다 낫다.
-#
-# 값은 위 CONF_VARS의 변수(환경변수 또는 설정 파일)로 받고, 비어 있으면 물어본다.
-# 변수로 받을 수 있는 조직은 하나뿐이다. 둘 이상은 대화형으로 계속 입력받는다.
+# Git identities are scoped to ~/git/<account>/ with includeIf.
 IDENTITY="$GIT_CONFIG_DIR/identity"
 
-# read -p 의 프롬프트는 stderr로 나가므로 $(ask ...) 결과에 섞이지 않는다.
-# 입력이 끝나면(Ctrl-D) 1을 돌려준다 — 안 그러면 아래 ask_until이 무한 루프에 빠진다.
-ask() {   # ask <프롬프트>
+ask() {
   local reply=""
   read -r -p "  $1: " reply || return 1
   printf '%s\n' "$reply"
 }
 
-ask_until() {   # ask_until <프롬프트> <검증함수> — 통과할 때까지 다시 묻는다
+ask_until() {
   local prompt="$1" check="$2" value=""
   while :; do
     value="$(ask "$prompt")" || return 1
@@ -211,8 +182,6 @@ ask_until() {   # ask_until <프롬프트> <검증함수> — 통과할 때까�
   printf '%s\n' "$value"
 }
 
-# get_field <환경변수값> <프롬프트> <검증함수>
-# 변수가 유효하면 그대로 쓰고, 아니면 대화형일 때만 물어본다. 정하지 못하면 1.
 get_field() {
   local given="$1" prompt="$2" check="$3"
   if [[ -n "$given" ]] && "$check" "$given"; then
@@ -225,14 +194,11 @@ get_field() {
 
 is_name()  { [[ -n "$1" ]] || { echo "  must not be empty" >&2; false; }; }
 is_email() { [[ "$1" == *@*.* && "$1" != *" "* ]] || { echo "  not an email address" >&2; false; }; }
-# 계정 이름은 경로(~/git/<계정>/)와 파일명(identity-<계정>) 양쪽에 그대로 들어간다.
-# GitHub 규약을 그대로 쓴다 — 영숫자와 하이픈, 하이픈으로 시작·끝 불가, 39자 이하.
 is_account() {
   [[ "$1" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,37}[A-Za-z0-9])?$ ]] \
     || { echo "  letters, digits and hyphens only, max 39, no leading/trailing hyphen" >&2; false; }
 }
 
-# 생성 파일도 다른 설정 파일과 같은 백업 디렉토리로 옮긴다.
 stash_existing() {
   [[ -e "$1" || -L "$1" ]] || return 0
   mkdir -p "$BACKUP"
@@ -240,12 +206,12 @@ stash_existing() {
   echo "  backup: $1 -> $BACKUP/"
 }
 
-write_account_config() {   # write_account_config <계정> <이름> <이메일>
+write_account_config() {
   local dst="$GIT_CONFIG_DIR/identity-$1"
   stash_existing "$dst"
   mkdir -p "$GIT_CONFIG_DIR"
   cat > "$dst" <<EOF
-# install.sh가 생성. ~/git/$1/ 아래에서만 적용된다.
+# Generated by the dotfiles installer for ~/git/$1/.
 [user]
 	name = $2
 	email = $3
@@ -253,19 +219,17 @@ EOF
   echo "  create: $dst"
 }
 
-write_identity() {   # write_identity <includeIf 블록들>
+write_identity() {
   mkdir -p "$GIT_CONFIG_DIR"
   stash_existing "$IDENTITY"
   cat > "$IDENTITY" <<EOF
-# install.sh가 생성. ~/.config/git/config 가 [include]로 항상 읽는다.
-# 기본 [user]는 일부러 두지 않는다 — ~/git/<계정>/ 밖에서는 커밋이 거부된다.
+# Generated by the dotfiles installer. No default Git identity is set.
 $1
 EOF
   echo "  create: $IDENTITY"
 }
 
-# ghostty 설정을 Application Support에서 ~/.config/ghostty/ 로 이전.
-# 남겨두면 나중에 읽히는 쪽이라 새 파일을 덮어써버린다.
+# Remove the higher-priority legacy Ghostty config.
 migrate_ghostty_to_xdg() {
   local f
   for f in "$GHOSTTY_LEGACY_DIR/config.ghostty" "$GHOSTTY_LEGACY_DIR/config"; do
@@ -279,17 +243,13 @@ migrate_ghostty_to_xdg() {
   return 0
 }
 
-# ── 예전 위치(홈 최상위)에서 ~/.config/git/ 으로 이전 ────────────────────────
-# ~/.gitconfig 는 반드시 치워야 한다. git은 XDG 파일과 ~/.gitconfig 를 둘 다 읽고
-# ~/.gitconfig 를 나중에 읽으므로, 남아 있으면 새 설정을 통째로 가려버린다.
+# Migrate legacy Git files to ~/.config/git/.
 migrate_git_to_xdg() {
   local f acct old new blocks="" name email
   local old_identity="$HOME/.gitconfig-identity"
 
-  # 신원은 버리지 않고 옮긴다. 다시 입력할 이유가 없다.
   if [[ -f "$old_identity" && ! -f "$IDENTITY" ]]; then
-    # includeIf가 실제로 가리키던 파일만 옮긴다. 계정 이름은 그대로 쓴다.
-    # --file 은 include를 따라가지 않으므로 includeIf 키가 그대로 나온다.
+    # Move only identity files referenced by the old includeIf config.
     for old in $(git config --file "$old_identity" --get-regexp '^includeif\..*\.path' 2>/dev/null | awk '{print $NF}'); do
       case "$old" in
         "~/.gitconfig-"*) acct="${old#\~/.gitconfig-}" ;;
@@ -310,7 +270,7 @@ migrate_git_to_xdg() {
 "
     done
 
-    # 예전 구조의 '기본 신원'은 어느 계정 것인지 정보가 없다. 한 번만 물어본다.
+    # The old default identity needs an account scope.
     name="$(git config --file "$old_identity" user.name 2>/dev/null || true)"
     email="$(git config --file "$old_identity" user.email 2>/dev/null || true)"
     if [[ -n "$email" ]]; then
@@ -340,7 +300,6 @@ migrate_git_to_xdg() {
     fi
   fi
 
-  # 리포에서 복사되던 것들은 새 위치로 다시 복사되므로 치우기만 하면 된다.
   for f in "$HOME/.gitconfig" "$HOME/.gitignore_global" "$HOME/.gitmessage"; do
     [[ -e "$f" || -L "$f" ]] || continue
     if $DRY; then
@@ -350,8 +309,7 @@ migrate_git_to_xdg() {
     fi
   done
 
-  # 옮기지 못하고 남은 예전 파일 — 이제 아무도 읽지 않는다.
-  # dry run에서는 위 이전이 실제로 일어나지 않았으므로 훑어봐야 오답만 나온다.
+  # Report unused legacy files after a real migration.
   $DRY && return 0
   for f in "$HOME"/.gitconfig-*; do
     [[ -e "$f" ]] || continue
@@ -360,10 +318,10 @@ migrate_git_to_xdg() {
   return 0
 }
 
-# identity 블록을 쌓는다. bash 3.2에는 nameref가 없어 전역을 쓴다.
+# Globals avoid namerefs, which Bash 3.2 does not support.
 ACCOUNT_BLOCKS=""
 ACCOUNT_COUNT=0
-add_account() {   # add_account <계정> <이름> <이메일>
+add_account() {
   write_account_config "$1" "$2" "$3"
   ACCOUNT_BLOCKS="$ACCOUNT_BLOCKS
 [includeIf \"gitdir:~/git/$1/\"]
@@ -375,12 +333,11 @@ add_account() {   # add_account <계정> <이름> <이메일>
 setup_git_identity() {
   if [[ -f "$IDENTITY" && -z "${GIT_PERSONAL_ACCOUNT:-}" ]]; then
     echo "  exists: $IDENTITY"
-    echo "          to redo, delete it and run ./install.sh again"
+    echo "          to redo, delete it and run $INSTALL_COMMAND again"
     return 0
   fi
 
   if $DRY; then
-    # 예전 위치에 신원이 있으면 위 이전 단계가 만들어주므로 여기서 물어볼 일이 없다.
     if [[ -f "$HOME/.gitconfig-identity" ]]; then
       echo "  reuse: $IDENTITY (migrated above)"
     else
@@ -389,7 +346,7 @@ setup_git_identity() {
     return 0
   fi
 
-  # 파이프로 실행되면(curl | bash, CI) 물어볼 수가 없다. 이때는 변수만 쓴다.
+  # Non-interactive runs use variables only.
   INTERACTIVE=true
   [[ -t 0 ]] || INTERACTIVE=false
 
@@ -400,7 +357,7 @@ setup_git_identity() {
     echo "  both ~/git/<name>/ and the identity file — repos elsewhere cannot commit."
   }
 
-  # ── 개인 계정 (필수) ──
+  # Personal account (required).
   acct="$(get_field "${GIT_PERSONAL_ACCOUNT:-}" "Your GitHub account" is_account)" || {
     echo "  skip: GIT_PERSONAL_ACCOUNT is unset or invalid and cannot prompt"; return 0; }
   name="$(get_field "${GIT_PERSONAL_NAME:-}" "  Commit name for $acct" is_name)" || {
@@ -409,7 +366,7 @@ setup_git_identity() {
     echo "  skip: GIT_PERSONAL_EMAIL is unset or invalid and cannot prompt"; return 0; }
   add_account "$acct" "$name" "$email"
 
-  # ── 조직 (선택, 대화형이면 여러 개) ──
+  # Organizations (optional).
   acct="${GIT_ORG_ACCOUNT:-}"
   if [[ -z "$acct" ]] && $INTERACTIVE; then
     echo
@@ -428,7 +385,7 @@ setup_git_identity() {
     add_account "$acct" "$name" "$email"
 
     $INTERACTIVE || break
-    # 변수로 받을 수 있는 조직은 하나뿐이다. 두 번째부터는 반드시 물어본다.
+    # Additional organizations are interactive only.
     unset GIT_ORG_NAME GIT_ORG_EMAIL
     echo
     acct="$(ask "Organization on GitHub (empty to finish)")"
@@ -444,27 +401,24 @@ setup_git_identity() {
 
 
 echo "dotfiles: $DOTFILES"
+echo "platform: $PLATFORM"
 [[ -n "$CONF_LOADED" ]] && echo "config:   $CONF_LOADED"
 $DRY && echo "(dry run — no changes)"
-# git은 $XDG_CONFIG_HOME/git/config 를 본다. 그게 ~/.config 가 아니면 여기서 두는
-# 파일을 git이 못 찾는다. 리포에 경로가 문자열로 박혀 있어 자동으로 못 따라간다.
+# This repository intentionally targets ~/.config.
 if [[ -n "${XDG_CONFIG_HOME:-}" && "${XDG_CONFIG_HOME}" != "$HOME/.config" ]]; then
   echo "warning: XDG_CONFIG_HOME=$XDG_CONFIG_HOME — this repo assumes ~/.config"
 fi
 echo
 
-# 예전 방식에서는 $ZSH_CUSTOM_DIR 자체가 리포를 가리키는 심볼릭 링크였다.
-# 그대로 두면 아래 플러그인 클론이 리포 안으로 들어가므로 실제 디렉토리로 바꾼다.
-# 이미 마이그레이션된 머신에서는 아무 일도 하지 않는다.
+# Replace the old ZSH_CUSTOM symlink with a real directory.
 if [[ -L "$ZSH_CUSTOM_DIR" ]]; then
   echo "\$ZSH_CUSTOM cleanup:"
   if $DRY; then
     echo "  [dry] replace symlink with real directory: $ZSH_CUSTOM_DIR"
   else
     OLD_CUSTOM="$(readlink "$ZSH_CUSTOM_DIR")"
-    rm "$ZSH_CUSTOM_DIR"          # 링크만 지운다. 가리키던 리포는 건드리지 않는다.
+    rm "$ZSH_CUSTOM_DIR"
     mkdir -p "$ZSH_CUSTOM_DIR"
-    # 리포 안에 이미 받아둔 플러그인/테마는 옮겨온다. 다시 받을 이유가 없다.
     for sub in plugins themes; do
       if [[ -d "$OLD_CUSTOM/$sub" ]]; then
         mv "$OLD_CUSTOM/$sub" "$ZSH_CUSTOM_DIR/$sub"
@@ -477,15 +431,12 @@ if [[ -L "$ZSH_CUSTOM_DIR" ]]; then
 fi
 $DRY || mkdir -p "$ZSH_CUSTOM_DIR"
 
-# oh-my-zsh 본체. .zshrc가 $ZSH/oh-my-zsh.sh를 소싱하므로 이게 없으면
-# 프롬프트와 플러그인은 물론 $ZSH_CUSTOM/*.zsh의 alias까지 통째로 안 뜬다.
-# 경로는 .zshrc의 $ZSH와 맞춰야 한다.
+# Install Oh My Zsh at the path used by .zshrc.
 echo "oh-my-zsh:"
 clone_or_pull "https://github.com/ohmyzsh/ohmyzsh.git" "$HOME/.oh-my-zsh"
 echo
 
-# 서드파티 플러그인은 리포 밖, $ZSH_CUSTOM 아래에 직접 받는다.
-# URL에 ':'가 들어가므로 구분자는 '|'
+# Format: repository URL|destination.
 REPOS=(
   "https://github.com/zsh-users/zsh-autosuggestions.git|$ZSH_CUSTOM_DIR/plugins/zsh-autosuggestions"
   "https://github.com/zsh-users/zsh-completions.git|$ZSH_CUSTOM_DIR/plugins/zsh-completions"
@@ -500,7 +451,7 @@ echo
 
 echo "legacy config locations:"
 migrate_git_to_xdg
-migrate_ghostty_to_xdg
+[[ "$PLATFORM" != macos ]] || migrate_ghostty_to_xdg
 echo
 
 echo "config files:"
@@ -508,13 +459,13 @@ for entry in "${FILES[@]}"; do
   copy "${entry%%:*}" "${entry#*:}"
 done
 
-# $ZSH_CUSTOM/*.zsh — 파일이 늘어도 install.sh를 고칠 필요 없게 훑는다.
+# Copy every managed custom zsh file.
 for src in "$DOTFILES"/zsh/custom/*.zsh; do
   [[ -e "$src" ]] || continue
   copy "zsh/custom/$(basename "$src")" "$ZSH_CUSTOM_DIR/$(basename "$src")"
 done
 
-# 복사 방식의 함정: 리포에서 지운 파일이 목적지에 남아 계속 소싱된다.
+# Warn about stale copied files.
 for dst in "$ZSH_CUSTOM_DIR"/*.zsh; do
   [[ -e "$dst" ]] || continue
   if [[ ! -f "$DOTFILES/zsh/custom/$(basename "$dst")" ]]; then
@@ -526,11 +477,21 @@ echo
 echo "git identity:"
 setup_git_identity
 echo
-if command -v brew >/dev/null; then
-  echo "Run this yourself to install Homebrew packages:"
-  echo "  brew bundle install --file=$DOTFILES/Brewfile"
-else
-  echo "Homebrew not found. See https://brew.sh"
+if [[ "$PLATFORM" == macos ]]; then
+  if command -v brew >/dev/null; then
+    if [[ "${DOTFILES_AUTO_PACKAGES:-false}" == true ]]; then
+      if $DRY; then
+        echo "[dry] brew bundle install --file=$DOTFILES/Brewfile"
+      else
+        brew bundle install --file="$DOTFILES/Brewfile"
+      fi
+    else
+      echo "Run this yourself to install Homebrew packages:"
+      echo "  brew bundle install --file=$DOTFILES/Brewfile"
+    fi
+  else
+    echo "Homebrew not found. See https://brew.sh"
+  fi
 fi
 
 echo
@@ -539,7 +500,7 @@ echo
 if ! $DRY && (( FAILED > 0 )); then
   echo
   echo "Failed to fetch $FAILED repo(s). Config files were copied,"
-  echo "so check your network and run ./install.sh again."
+  echo "so check your network and run $INSTALL_COMMAND again."
   exit 1
 fi
 

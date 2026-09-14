@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+# Linux entry point for Ubuntu, Debian, and Rocky Linux.
+set -euo pipefail
+
+SCRIPT_PATH="${BASH_SOURCE[0]:-}"
+DOTFILES=""
+if [[ -n "$SCRIPT_PATH" ]]; then
+  DOTFILES="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+fi
+DRY=false
+ARGS=("$@")
+
+# Validate options before installing packages.
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry) DRY=true ;;
+    --config)
+      [[ $# -ge 2 ]] || { echo "usage: $0 [--dry] [--config FILE]" >&2; exit 2; }
+      shift ;;
+    --config=*) ;;
+    *) echo "usage: $0 [--dry] [--config FILE]" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+[[ "$(uname -s)" == Linux && -r /etc/os-release ]] || {
+  echo "install_linux.sh is for Linux" >&2
+  exit 1
+}
+
+# shellcheck disable=SC1091
+. /etc/os-release
+case "${ID:-} ${ID_LIKE:-}" in
+  *ubuntu*|*debian*) LINUX_FAMILY=debian ;;
+  *rocky*) LINUX_FAMILY=rocky ;;
+  *)
+    echo "unsupported Linux distribution: ${PRETTY_NAME:-${ID:-unknown}}" >&2
+    exit 1
+    ;;
+esac
+
+if [[ -z "$DOTFILES" || ! -f "$DOTFILES/install_common.sh" ]]; then
+  ARCHIVE_URL="https://github.com/c1t1d0s7/dotfiles/archive/refs/heads/main.tar.gz"
+  WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-install.XXXXXX")"
+  trap 'rm -rf "$WORK_DIR"' EXIT INT TERM
+
+  curl -fsSL "$ARCHIVE_URL" | tar -xz -C "$WORK_DIR"
+  SOURCE_DIR="$WORK_DIR/dotfiles-main"
+  [[ -f "$SOURCE_DIR/install_linux.sh" ]] || {
+    echo "failed to download dotfiles" >&2
+    exit 1
+  }
+
+  if [[ -t 2 ]]; then
+    bash "$SOURCE_DIR/install_linux.sh" "${ARGS[@]}" </dev/tty
+  else
+    bash "$SOURCE_DIR/install_linux.sh" "${ARGS[@]}"
+  fi
+  exit
+fi
+
+PACKAGES=(git zsh neovim fzf curl unzip ca-certificates coreutils less)
+if [[ "$LINUX_FAMILY" == rocky ]]; then
+  PACKAGES+=(util-linux-user)
+fi
+
+run_as_root() {
+  if (( EUID == 0 )); then
+    "$@"
+  elif command -v sudo >/dev/null; then
+    sudo "$@"
+  else
+    echo "sudo is required to install packages" >&2
+    exit 1
+  fi
+}
+
+ensure_rocky_repositories() {
+  local repository=crb
+  if [[ "${VERSION_ID%%.*}" == 8 ]]; then
+    repository=powertools
+  fi
+
+  if $DRY; then
+    rpm -q epel-release >/dev/null 2>&1 \
+      || echo "  [dry] dnf install: epel-release"
+    echo "  [dry] enable: $repository"
+    return 0
+  fi
+
+  rpm -q epel-release >/dev/null 2>&1 \
+    || run_as_root dnf install -y epel-release
+
+  if command -v crb >/dev/null; then
+    run_as_root crb enable
+    return 0
+  fi
+
+  run_as_root dnf install -y dnf-plugins-core
+  run_as_root dnf config-manager --set-enabled "$repository"
+}
+
+install_linux_packages() {
+  local package
+  local -a missing=()
+
+  for package in "${PACKAGES[@]}"; do
+    case "$LINUX_FAMILY" in
+      debian)
+        dpkg-query -W -f='${Status}' "$package" 2>/dev/null \
+          | grep -q '^install ok installed$' || missing+=("$package")
+        ;;
+      rocky)
+        rpm -q "$package" >/dev/null 2>&1 || missing+=("$package")
+        ;;
+    esac
+  done
+
+  if (( ${#missing[@]} == 0 )); then
+    echo "  installed: ${PACKAGES[*]}"
+    return 0
+  fi
+
+  if [[ "$LINUX_FAMILY" == rocky ]]; then
+    ensure_rocky_repositories
+  fi
+
+  if $DRY; then
+    if [[ "$LINUX_FAMILY" == debian ]]; then
+      echo "  [dry] apt-get install: ${missing[*]}"
+    else
+      echo "  [dry] dnf install: ${missing[*]}"
+    fi
+    return 0
+  fi
+
+  if [[ "$LINUX_FAMILY" == debian ]]; then
+    run_as_root apt-get update
+    run_as_root apt-get install -y "${missing[@]}"
+  else
+    run_as_root dnf install -y "${missing[@]}"
+  fi
+}
+
+install_oh_my_posh() {
+  local installer
+
+  if [[ -x "$HOME/.local/bin/oh-my-posh" ]] || command -v oh-my-posh >/dev/null; then
+    echo "  installed: oh-my-posh"
+    return 0
+  fi
+
+  if $DRY; then
+    echo "  [dry] install: oh-my-posh -> $HOME/.local/bin/oh-my-posh"
+    return 0
+  fi
+
+  installer="$(mktemp "${TMPDIR:-/tmp}/oh-my-posh-install.XXXXXX")"
+  if ! curl -fsSL https://ohmyposh.dev/install.sh -o "$installer"; then
+    rm -f "$installer"
+    return 1
+  fi
+  if ! bash "$installer" -d "$HOME/.local/bin"; then
+    rm -f "$installer"
+    return 1
+  fi
+  rm -f "$installer"
+  echo "  install: oh-my-posh"
+}
+
+echo "linux packages:"
+install_linux_packages
+echo
+
+echo "oh-my-posh:"
+install_oh_my_posh
+echo
+
+DOTFILES_INSTALL_TARGET=linux \
+DOTFILES_INSTALL_COMMAND=./install_linux.sh \
+  "$DOTFILES/install_common.sh" "${ARGS[@]}"
+
+ZSH_BIN="$(command -v zsh || printf '/usr/bin/zsh')"
+if [[ "${SHELL:-}" != "$ZSH_BIN" ]]; then
+  echo
+  echo "Run this yourself to make zsh your login shell:"
+  echo "  chsh -s $ZSH_BIN"
+fi

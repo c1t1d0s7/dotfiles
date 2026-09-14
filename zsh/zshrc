@@ -1,18 +1,15 @@
-# ~/.zshrc — 대화형 셸 전용
-# 환경변수(PATH 등)는 ~/.zshenv 참조.
-# alias 등 주제별 설정은 ~/.config/zsh/*.zsh — OMZ가 자동으로 소싱한다.
+# Interactive zsh configuration.
 
 export ZSH="$HOME/.oh-my-zsh"
-# 커스텀 플러그인/테마/설정 위치. OMZ 기본값($ZSH/custom) 대신 dotfiles가 관리하는 곳으로.
 export ZSH_CUSTOM="$HOME/.config/zsh"
 
-# 프롬프트는 oh-my-posh가 담당한다. OMZ 기본 테마는 로드하지 않는다.
+# oh-my-posh owns the prompt.
 ZSH_THEME=""
 
-# compaudit(fpath 권한 검사) 생략 — 단독 사용 머신이라 불필요. 시작 시간 ~16ms 절약.
-ZSH_DISABLE_COMPFIX="true"
+# Keep compaudit enabled on multi-user Linux systems.
+[[ "$OSTYPE" != darwin* ]] || ZSH_DISABLE_COMPFIX="true"
 
-# zsh-syntax-highlighting은 다른 플러그인이 정의한 위젯을 감싸야 하므로 반드시 마지막.
+# Must remain last.
 plugins=(
   git
   sudo
@@ -27,14 +24,41 @@ plugins=(
   zsh-syntax-highlighting
 )
 
-# brew가 설치한 도구들의 공식 completion은 $HOMEBREW_PREFIX/share/zsh/site-functions에
-# 들어간다. 이 경로를 기본 fpath에 넣어주는 건 homebrew가 설치한 zsh인데,
-# 로그인 셸은 /bin/zsh(애플 시스템 zsh)라서 직접 추가해야 한다.
-# 없으면 _gh, _argocd, _eksctl, _istioctl, _k9s, _bat 등이 조용히 로드되지 않는다.
-# compinit은 아래 oh-my-zsh.sh가 실행하므로 반드시 그 전에 넣을 것.
-# (중복은 .zshenv의 typeset -U fpath가 막아준다)
-fpath=($HOMEBREW_PREFIX/share/zsh/site-functions $fpath)
+# Add Homebrew completions when available.
+if [[ -n ${HOMEBREW_PREFIX:-} ]]; then
+  fpath=($HOMEBREW_PREFIX/share/zsh/site-functions $fpath)
+fi
 
-source $ZSH/oh-my-zsh.sh
+# VS Code may inject PATH entries after user startup files.
+_dotfiles_prioritize_path() {
+  path=(
+    $HOME/go/bin
+    $HOME/.local/bin
+    ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/bin}
+    ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/sbin}
+    $path
+  )
+  typeset -gU path
+}
+_dotfiles_prioritize_path
 
-eval "$(oh-my-posh init zsh --config "$HOME/.config/oh-my-posh/config.omp.json")"
+# Keep the shell usable if a clone failed during installation.
+[[ ! -r "$ZSH/oh-my-zsh.sh" ]] || source "$ZSH/oh-my-zsh.sh"
+
+# Keep the shell usable if oh-my-posh is not installed yet.
+if (( $+commands[oh-my-posh] )); then
+  eval "$(oh-my-posh init zsh --config "$HOME/.config/oh-my-posh/config.omp.json")"
+fi
+
+# Reapply once after VS Code finishes its environment injection.
+if [[ -n ${VSCODE_INJECTION:-} ]]; then
+  autoload -Uz add-zsh-hook
+  _dotfiles_prioritize_path_once() {
+    _dotfiles_prioritize_path
+    add-zsh-hook -d precmd _dotfiles_prioritize_path_once
+    unfunction _dotfiles_prioritize_path_once _dotfiles_prioritize_path
+  }
+  add-zsh-hook precmd _dotfiles_prioritize_path_once
+else
+  unfunction _dotfiles_prioritize_path
+fi

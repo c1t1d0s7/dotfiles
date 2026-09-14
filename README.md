@@ -1,16 +1,75 @@
 # dotfiles
 
-macOS (Apple Silicon) 개발 환경 설정.
+macOS와 Ubuntu, Debian, Rocky Linux에서 사용하는 개발 환경 설정.
 
 ## 설치
+
+### curl로 설치
+
+macOS:
+
+```bash
+# Preview changes.
+curl -fsSL https://raw.githubusercontent.com/c1t1d0s7/dotfiles/main/install_macos.sh | bash -s -- --dry
+
+# Install.
+curl -fsSL https://raw.githubusercontent.com/c1t1d0s7/dotfiles/main/install_macos.sh | bash
+```
+
+Linux (Ubuntu, Debian, Rocky Linux):
+
+```bash
+# Preview changes.
+curl -fsSL https://raw.githubusercontent.com/c1t1d0s7/dotfiles/main/install_linux.sh | bash -s -- --dry
+
+# Install.
+curl -fsSL https://raw.githubusercontent.com/c1t1d0s7/dotfiles/main/install_linux.sh | bash
+```
+
+각 스크립트는 `main` 브랜치의 나머지 파일을 임시 디렉터리에 내려받고 종료할 때
+삭제합니다. macOS에서는 Homebrew가 미리 설치되어 있어야 하며 curl 설치 시
+`Brewfile`도 함께 적용합니다. 실행 전에 내용을 확인하려면 파이프 이후를 빼고 실행하세요.
+
+로컬에서 설정을 수정하거나 커밋하려면 아래처럼 저장소를 클론해 설치합니다.
+
+### macOS
 
 ```bash
 git clone https://github.com/c1t1d0s7/dotfiles.git
 cd dotfiles
-./install.sh --dry     # 무엇이 바뀌는지 먼저 확인
-./install.sh           # oh-my-zsh + 플러그인 클론 + 설정 파일 복사
-brew bundle install --file=Brewfile  # oh-my-posh를 포함한 패키지 설치
+./install_macos.sh --dry     # Preview changes.
+./install_macos.sh           # Install configs, Oh My Zsh, and plugins.
+brew bundle install --file=Brewfile  # Install Homebrew packages.
 ```
+
+### Linux
+
+리포를 받기 위한 `git`만 먼저 준비합니다.
+
+```bash
+# Ubuntu / Debian
+sudo apt-get update && sudo apt-get install -y git
+
+# Rocky Linux
+sudo dnf install -y git
+
+git clone https://github.com/c1t1d0s7/dotfiles.git
+cd dotfiles
+./install_linux.sh --dry
+./install_linux.sh
+chsh -s "$(command -v zsh)"  # Log out once after changing the login shell.
+```
+
+Linux에서는 `install_linux.sh`가 배포판을 감지해 빠진 `git`, `zsh`, `neovim`, `fzf`, `curl`,
+`unzip`, `ca-certificates`, `coreutils`, `less`를 APT 또는 DNF로 설치합니다. Rocky Linux에서는
+`chsh`를 제공하는 `util-linux-user`도 설치하고, `neovim`과 `fzf`를 위해 EPEL과
+CRB(Rocky 8은 PowerTools)를 활성화합니다.
+Oh My Posh는 [공식 Linux 설치 스크립트](https://ohmyposh.dev/docs/installation/linux)로
+`~/.local/bin/oh-my-posh`에 설치합니다. `Brewfile`, Ghostty, VS Code 설정은 적용하지 않습니다.
+프롬프트 아이콘을 표시하려면 접속하는 터미널에 Nerd Font가 필요합니다.
+
+Linux의 기본 로그인 셸은 보통 Bash이므로 zsh도 설치 대상입니다. 다만 로그인 셸은 사용자
+계정 설정이어서 스크립트가 자동으로 바꾸지 않고, 설치 후 실행할 `chsh` 명령만 안내합니다.
 
 git 커밋 신원(계정·이름·이메일)은 실행 중에 물어봅니다. 미리 파일이나 환경변수로
 넘기려면 [git 신원 설정](#git-신원-설정)을 참고하세요.
@@ -18,7 +77,7 @@ git 커밋 신원(계정·이름·이메일)은 실행 중에 물어봅니다. �
 리포 파일을 홈으로 **복사**합니다(심볼릭 링크가 아닙니다). git 설정만 `~/.config/git/` 아래로 갑니다.
 서드파티 플러그인은 리포 밖, `~/.config/zsh` 아래로 직접 받습니다.
 
-`install.sh`가 받아오는 것:
+두 설치 스크립트가 공통으로 받아오는 것:
 
 - **oh-my-zsh 본체** → `~/.oh-my-zsh`. `.zshrc`가 이걸 소싱하므로 없으면
   프롬프트·플러그인은 물론 `$ZSH_CUSTOM/*.zsh`의 alias까지 통째로 안 뜹니다.
@@ -27,14 +86,15 @@ git 커밋 신원(계정·이름·이메일)은 실행 중에 물어봅니다. �
 이미 있으면 `git pull`로 갱신하므로 재실행해도 안전합니다.
 하나가 실패해도 나머지와 설정 파일 복사는 그대로 진행하고, 마지막에 몇 개 실패했는지 알려주며 exit 1 합니다.
 
-프롬프트 엔진 **oh-my-posh**는 `Brewfile`로 설치하고, 이 리포의 설정을
-`~/.config/oh-my-posh/config.omp.json`으로 복사합니다.
+프롬프트 엔진 **oh-my-posh**는 macOS에서는 `Brewfile`, Linux에서는 공식 설치
+스크립트로 설치하고, 이 리포의 설정을 `~/.config/oh-my-posh/config.omp.json`으로 복사합니다.
 
 기존 파일은 덮어쓰지 않고 `~/.dotfiles-backup/<타임스탬프>/`로 옮깁니다.
 
 ## 구조
 
-`→`는 복사 대상입니다. 고친 뒤 `./install.sh`를 다시 실행해야 반영됩니다.
+`→`는 복사 대상입니다. 고친 뒤 macOS는 `./install_macos.sh`, Linux는
+`./install_linux.sh`를 다시 실행해야 반영됩니다.
 
 ```
 zsh/
@@ -49,33 +109,36 @@ git/
 ├── gitconfig               → ~/.config/git/config
 ├── gitignore_global        → ~/.config/git/ignore
 └── gitmessage              → ~/.config/git/message   커밋 템플릿
-ghostty/config.ghostty       → ~/.config/ghostty/
-vscode/
+ghostty/config.ghostty       → ~/.config/ghostty/       macOS에서만
+vscode/                                                macOS에서만
 ├── settings.json           → ~/Library/Application Support/Code/User/settings.json
 └── keybindings.json        → ~/Library/Application Support/Code/User/keybindings.json
-Brewfile                                       brew bundle dump 결과 (VS Code 확장 목록 포함)
+Brewfile                                       macOS 패키지·VS Code 확장 목록
+install_macos.sh                               macOS 설치 진입점
+install_linux.sh                               Ubuntu/Debian/Rocky 설치 진입점
+install_common.sh                              공통 설치 로직
 ```
 
-리포에 없고 `install.sh`가 `~/.config/zsh` 아래에 직접 받는 것:
+리포에 없고 설치 스크립트가 `~/.config/zsh` 아래에 직접 받는 것:
 
 ```
 ~/.config/zsh/
 └── plugins/{zsh-autosuggestions,zsh-completions,zsh-syntax-highlighting}/
 ```
 
-### ghostty 설정이 `~/.config/ghostty/`에 있는 이유
+### ghostty 설정이 `~/.config/ghostty/`에 있는 이유 (macOS)
 
 ghostty는 설정을 **두 곳에서 읽고 나중 것이 이깁니다** — XDG 경로
 (`$XDG_CONFIG_HOME/ghostty/` 또는 `~/.config/ghostty/`)를 먼저, macOS의
 `~/Library/Application Support/com.mitchellh.ghostty/`를 나중에 읽습니다.
 
-그래서 `install.sh`가 Application Support 쪽 파일을 백업으로 치웁니다. 남겨두면
+그래서 `install_macos.sh`가 Application Support 쪽 파일을 백업으로 치웁니다. 남겨두면
 `~/.config/ghostty/`에 둔 설정이 통째로 가려집니다. git과 똑같은 함정입니다.
 
 파일명은 `config.ghostty`입니다. ghostty 1.2.3부터 바뀐 이름이고 그 전에는
 `config`였습니다 — 예전 이름의 파일도 같이 치웁니다.
 
-### VS Code 설정이 `~/Library/Application Support/`에 있는 이유
+### VS Code 설정이 `~/Library/Application Support/`에 있는 이유 (macOS)
 
 **VS Code는 macOS에서 XDG를 보지 않습니다.** `~/.config/Code`를 만들어도 읽지 않고,
 사용자 설정 경로는 `~/Library/Application Support/Code/User/` 한 곳뿐입니다. ghostty·git처럼
@@ -95,18 +158,18 @@ ghostty는 설정을 **두 곳에서 읽고 나중 것이 이깁니다** — XDG
 
 예외가 하나 있습니다. `yaml.disableSchemaDetection`은 **확장이 스스로 써넣는 값**입니다
 (`redhat.vscode-yaml`이 `github.vscode-github-actions` 설치 여부에 따라 글롭을 넣고 뺍니다).
-리포에서 빼면 VS Code가 다시 써넣어 `./install.sh --dry`가 영영 `(differs)`로 뜨므로,
+리포에서 빼면 VS Code가 다시 써넣어 `./install_macos.sh --dry`가 영영 `(differs)`로 뜨므로,
 확장이 만드는 값 그대로 둡니다.
 
-> 설정 파일을 VS Code 편집기에 열어둔 채 `./install.sh`를 돌리면, 디스크가 바뀐 걸
+> 설정 파일을 VS Code 편집기에 열어둔 채 `./install_macos.sh`를 돌리면, 디스크가 바뀐 걸
 > 감지해 편집기 내용이 갱신됩니다. 저장 안 한 수정이 있다면 먼저 정리하세요.
 
 `snippets/`, `profiles/`, `globalStorage/` 등 나머지는 추적하지 않습니다 — 대부분 VS Code가
-스스로 쓰는 상태 파일입니다. 스니펫을 관리하고 싶어지면 `install.sh`의 `FILES`에 줄을 더하세요.
+스스로 쓰는 상태 파일입니다. 스니펫을 관리하고 싶어지면 `install_common.sh`의 `FILES`에 줄을 더하세요.
 
 ### git 설정이 `~/.config/git/`에 있는 이유
 
-홈 최상위에 `.gitconfig*` 다섯 개를 늘어놓는 대신 한 디렉터리로 모았습니다.
+홈 최상위에 Git 설정 파일을 늘어놓는 대신 한 디렉터리로 모았습니다.
 파일명은 git이 정한 규약을 그대로 씁니다:
 
 | 파일 | 비고 |
@@ -116,14 +179,14 @@ ghostty는 설정을 **두 곳에서 읽고 나중 것이 이깁니다** — XDG
 | `message` | 기본값이 없어 `commit.template`이 이 경로를 가리킵니다 |
 
 첫 줄이 중요합니다. **`~/.gitconfig`가 남아 있으면 여기 설정이 통째로 가려집니다.**
-그래서 `install.sh`가 예전 위치의 파일들을 백업으로 치웁니다. 신원 파일은 버리지 않고
+그래서 설치 스크립트가 예전 위치의 파일들을 백업으로 치웁니다. 신원 파일은 버리지 않고
 새 위치로 옮기므로 다시 입력할 필요가 없습니다 — 예전 구조의 '기본 신원'만 어느 계정
 것인지 정보가 없어서 한 번 물어봅니다.
 
 `~/.gitconfig`가 없으면 `git config --global`도 `~/.config/git/config`에 씁니다.
 
 > `XDG_CONFIG_HOME`을 `~/.config`가 아닌 값으로 쓰면 git이 이 파일들을 못 찾습니다.
-> 리포에 경로가 문자열로 박혀 있어 자동으로 따라가지 않습니다. `install.sh`가 경고합니다.
+> 리포에 경로가 문자열로 박혀 있어 자동으로 따라가지 않습니다. 설치 스크립트가 경고합니다.
 
 ### git 신원 설정
 
@@ -140,7 +203,7 @@ GitHub 계정과 SSH 키는 하나입니다. **리포의 위치가 커밋 이름
 **기본 신원은 없습니다.** `~/git/<등록한 계정>/` 밖에서는 커밋이 거부됩니다:
 
 ```
-$ git commit -m "..."          # ~/tmp/scratch 에서
+$ git commit -m "..."          # From ~/tmp/scratch.
 fatal: no email was given and auto-detection is disabled
 ```
 
@@ -151,17 +214,17 @@ fatal: no email was given and auto-detection is disabled
 지정하는 것입니다:
 
 ```bash
-git config user.name  "Your Name"      # --global 을 붙이면 안 됩니다
+git config user.name  "Your Name"      # Do not add --global.
 git config user.email you@example.com
 ```
 
 > git이 출력하는 안내는 `--global`을 쓰라고 합니다. 그대로 하면
 > `~/.config/git/config`에 쓰이는데, 이 파일은 리포에서 복사되므로 다음
-> `./install.sh` 때 사라집니다. 게다가 전역 기본값이 생겨 위 안전장치가 무너집니다.
+> 다음 설치 때 사라집니다. 게다가 전역 기본값이 생겨 위 안전장치가 무너집니다.
 
 막는 건 **커밋뿐**입니다. clone·fetch·push·status·log는 어디서든 정상입니다.
 
-`install.sh`가 **변수로 받고, 비어 있는 값만 물어봅니다.**
+설치 스크립트가 **변수로 받고, 비어 있는 값만 물어봅니다.**
 
 | 변수 | 값 |
 |---|---|
@@ -188,10 +251,12 @@ GIT_ORG_NAME="Your Name"
 GIT_ORG_EMAIL=you@company.example
 EOF
 
-./install.sh                          # install.conf 를 자동으로 읽습니다
-./install.sh --config ~/my.conf       # 다른 파일을 쓰려면
-DOTFILES_CONF=~/my.conf ./install.sh  # 환경변수로 지정해도 됩니다
+./install_macos.sh                          # Reads install.conf automatically.
+./install_macos.sh --config ~/my.conf       # Use another file.
+DOTFILES_CONF=~/my.conf ./install_macos.sh  # Or set it through the environment.
 ```
+
+Linux에서는 위 명령의 `./install_macos.sh`를 `./install_linux.sh`로 바꿉니다.
 
 > `source` 이므로 파일 안의 임의의 명령이 실행됩니다. 남이 준 파일을 그냥 넘기지 마세요.
 > `--config`로 지정한 파일이 없으면 조용히 넘어가지 않고 `exit 2` 합니다.
@@ -224,7 +289,7 @@ git identity:
 생성 결과는 이렇게 생겼습니다:
 
 ```ini
-# ~/.config/git/identity — 기본 [user] 가 없다
+# ~/.config/git/identity — no default [user].
 [includeIf "gitdir:~/git/c1t1d0s7/"]
 	path = ~/.config/git/identity-c1t1d0s7
 
@@ -242,7 +307,10 @@ git identity:
 | `.zshenv` | 모든 zsh (스크립트, `zsh -c` 포함) | 환경변수 |
 | `.zshrc` | 대화형 셸만 | 플러그인, alias, 프롬프트 |
 
-PATH를 `.zshrc`에 두면 스크립트에서 homebrew 도구를 못 찾습니다.
+PATH를 `.zshrc`에 두면 스크립트에서 Homebrew나 `~/.local/bin` 도구를 못 찾습니다.
+우선순위는 `~/go/bin`, `~/.local/bin`, Homebrew, 시스템 경로 순입니다.
+Zsh의 `path` 배열은 export된 `PATH`와 연결되어 있어 별도의 `export PATH`는 필요하지 않습니다.
+VS Code가 시작 파일 실행 후 PATH를 주입하는 경우에는 첫 프롬프트에서 이 순서를 한 번 더 적용합니다.
 
 ### `$ZSH_CUSTOM`
 
@@ -252,7 +320,7 @@ oh-my-zsh는 `$ZSH_CUSTOM/*.zsh`를 알파벳 순으로 자동 소싱합니다(�
 
 파일명 앞의 번호는 소싱 순서용입니다.
 
-### brew completion
+### Homebrew completion (macOS)
 
 로그인 셸은 `/bin/zsh`(애플 시스템 zsh)입니다. homebrew가 설치한 zsh를 로그인 셸로 쓰면
 `$HOMEBREW_PREFIX/share/zsh/site-functions`가 기본 `fpath`에 들어가지만, 시스템 zsh는 아닙니다.
@@ -261,29 +329,30 @@ oh-my-zsh는 `$ZSH_CUSTOM/*.zsh`를 알파벳 순으로 자동 소싱합니다(�
 
 ## 관리
 
-**설정은 리포에서 고치고 `./install.sh`로 반영합니다.** 복사 방식이라 방향이 한쪽입니다 —
-`~/.zshrc`를 직접 고쳐도 리포에 올라오지 않고, 다음 `install.sh` 때 백업으로 밀려납니다.
+**설정은 리포에서 고치고 설치 스크립트로 반영합니다.** 복사 방식이라 방향이 한쪽입니다 —
+`~/.zshrc`를 직접 고쳐도 리포에 올라오지 않고, 다음 설치 때 백업으로 밀려납니다.
+아래 명령은 macOS 기준이며 Linux에서는 `./install_linux.sh`를 사용합니다.
 
 ```bash
-# 설정 수정
+# Edit a config.
 vi zsh/zshrc
-./install.sh --dry     # 어디가 바뀌는지 확인
-./install.sh
+./install_macos.sh --dry     # Preview changes.
+./install_macos.sh
 
-# 홈과 리포가 어긋났는지 확인 — "(differs)"로 표시됩니다
-./install.sh --dry
+# Find files that differ from the repository.
+./install_macos.sh --dry
 
-# 홈 쪽에서 먼저 고쳐버렸다면 리포로 되가져오기
+# Copy a home-side change back to the repository.
 cp ~/.zshrc zsh/zshrc && git diff
 
-# VS Code 설정은 UI로 고치게 되므로 되가져올 일이 잦다 (경로에 공백 — 따옴표 필수)
+# Copy VS Code settings changed through the UI.
 cp "$HOME/Library/Application Support/Code/User/settings.json" vscode/settings.json && git diff
 
-# 패키지 목록 갱신 (VS Code 확장 목록도 여기서 같이 갱신된다)
+# Refresh packages and VS Code extensions.
 brew bundle dump --force --file=Brewfile
 
-# 플러그인 업데이트 (install.sh가 알아서 pull 한다)
-./install.sh
+# Update plugins.
+./install_macos.sh
 ```
 
 ## 주의

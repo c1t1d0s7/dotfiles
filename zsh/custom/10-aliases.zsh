@@ -1,19 +1,19 @@
-# OMZ가 $ZSH_CUSTOM/*.zsh 를 알파벳 순으로 자동 소싱한다.
-# 플러그인 로드 후, 테마 로드 전에 실행되므로 플러그인 alias를 덮어쓸 수 있다.
+# Loaded automatically from $ZSH_CUSTOM by Oh My Zsh.
 
-# cat 대체
-alias cat="bat --style=plain --paging=never"
+# Modern CLI replacements.
+(( $+commands[bat] )) && alias cat="bat --style=plain --paging=never"
 
-# ls 대체
-alias ls="eza --icons=auto"
-alias ll="eza --long --color=always --color-scale --icons --group-directories-first --group --git --time-style=long-iso"
-alias la="eza --long --color=always --color-scale --icons --group-directories-first --group --git --time-style=long-iso --all"
-alias lt="eza --icons --tree"
+if (( $+commands[eza] )); then
+  alias ls="eza --icons=auto"
+  alias ll="eza --long --color=always --color-scale --icons --group-directories-first --group --git --time-style=long-iso"
+  alias la="eza --long --color=always --color-scale --icons --group-directories-first --group --git --time-style=long-iso --all"
+  alias lt="eza --icons --tree"
+fi
 
-# top 대체
-alias top="htop"
+(( $+commands[htop] )) && alias top="htop"
 
-# vim 대체
-alias vi="nvim"
-alias vim="nvim"
-alias v="nvim"
+if (( $+commands[nvim] )); then
+  alias vi="nvim"
+  alias vim="nvim"
+  alias v="nvim"
+fi
