@@ -192,6 +192,24 @@ get_field() {
   ask_until "$prompt" "$check"
 }
 
+get_optional_account() {
+  local given="$1" prompt="$2" value=""
+  if [[ -n "$given" ]] && is_account "$given"; then
+    printf '%s\n' "$given"
+    return 0
+  fi
+  $INTERACTIVE || return 1
+
+  while :; do
+    value="$(ask "$prompt")" || return 1
+    [[ -z "$value" ]] && return 1
+    if is_account "$value"; then
+      printf '%s\n' "$value"
+      return 0
+    fi
+  done
+}
+
 is_name()  { [[ -n "$1" ]] || { echo "  must not be empty" >&2; false; }; }
 is_email() { [[ "$1" == *@*.* && "$1" != *" "* ]] || { echo "  not an email address" >&2; false; }; }
 is_account() {
@@ -341,7 +359,7 @@ setup_git_identity() {
     if [[ -f "$HOME/.gitconfig-identity" ]]; then
       echo "  reuse: $IDENTITY (migrated above)"
     else
-      echo "  [dry] create: $IDENTITY (variables, then prompts for what is missing)"
+      echo "  [dry] configure: $IDENTITY (optional; empty account skips)"
     fi
     return 0
   fi
@@ -357,9 +375,9 @@ setup_git_identity() {
     echo "  both ~/git/<name>/ and the identity file — repos elsewhere cannot commit."
   }
 
-  # Personal account (required).
-  acct="$(get_field "${GIT_PERSONAL_ACCOUNT:-}" "Your GitHub account" is_account)" || {
-    echo "  skip: GIT_PERSONAL_ACCOUNT is unset or invalid and cannot prompt"; return 0; }
+  # Skip all identity setup when the first account is empty.
+  acct="$(get_optional_account "${GIT_PERSONAL_ACCOUNT:-}" "Your GitHub account (empty to skip)")" || {
+    echo "  skip: Git identity was not configured"; return 0; }
   name="$(get_field "${GIT_PERSONAL_NAME:-}" "  Commit name for $acct" is_name)" || {
     echo "  skip: GIT_PERSONAL_NAME is unset or invalid and cannot prompt"; return 0; }
   email="$(get_field "${GIT_PERSONAL_EMAIL:-}" "  Commit email for $acct" is_email)" || {

@@ -237,6 +237,8 @@ git config user.email you@example.com
 
 우선순위는 **환경변수 > 설정 파일 > 입력**입니다. 셋 다 없으면 물어보고,
 비대화형(CI, `curl | bash`)에서 물어볼 수 없으면 그 항목을 건너뜁니다.
+Git identity가 필요 없으면 첫 `Your GitHub account` 질문에서 Enter를 눌러 전체 설정을
+건너뛸 수 있습니다. 이 경우 Git의 이름과 이메일은 생성하지 않습니다.
 
 **설정 파일**은 셸 조각이라 그대로 `source` 합니다. 기본 경로는 리포 안의
 `install.conf`이고 `.gitignore`에 걸려 있습니다:
@@ -268,7 +270,7 @@ Linux에서는 위 명령의 `./install_macos.sh`를 `./install_linux.sh`로 바
 git identity:
   One identity per GitHub account or organization. The name you enter sets
   both ~/git/<name>/ and the identity file — repos elsewhere cannot commit.
-  Your GitHub account: c1t1d0s7
+  Your GitHub account (empty to skip): c1t1d0s7
     Commit name for c1t1d0s7: Your Name
     Commit email for c1t1d0s7: you@example.com
 
@@ -280,8 +282,8 @@ git identity:
 ```
 
 계정 이름은 GitHub 규약으로 검증합니다 — 영숫자와 하이픈, 하이픈으로 시작·끝 불가,
-39자 이하. **입력에 기본값은 없습니다.** 엔터로 넘긴 값이 그대로 커밋에 박히는 것보다
-낫다고 봤습니다. 형식이 틀리면 다시 물어봅니다.
+39자 이하. 첫 질문에서 Enter를 누르면 설정을 건너뛰고, 계정을 선택한 뒤의 이름과 이메일은
+빈 값으로 저장하지 않습니다. 형식이 틀리면 다시 물어봅니다.
 
 `~/.config/git/identity`가 이미 있으면 묻지 않고 넘어갑니다. 다시 설정하려면 그 파일을
 지우고 재실행하세요.
