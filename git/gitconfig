@@ -29,7 +29,9 @@
 [pull]
 	rebase = true
 [rebase]
+	autoSquash = true          # fixup!/squash! 커밋을 대화형 rebase에서 자동 정렬
 	autoStash = true
+	missingCommitsCheck = warn # todo 줄을 실수로 지워 커밋이 누락되면 경고
 [rerere]
 	enabled = true             # 충돌 해결을 기록해뒀다가 재사용. rebase 반복 시 효과 큼
 
@@ -47,9 +49,13 @@
 [branch]
 	sort = -committerdate      # 최근 커밋된 브랜치를 위로
 
+[tag]
+	sort = version:refname     # v2.10을 v2.9 뒤에 두는 자연스러운 버전 정렬
+
 [push]
 	default = current
 	autoSetupRemote = true
+
 [fetch]
 	prune = true
 
@@ -59,11 +65,24 @@
 [color]
 	ui = auto
 
+[column]
+	ui = auto                 # branch·tag 등의 긴 목록을 터미널 너비에 맞춰 표시
+
+# 기본 git log도 읽기 쉬운 한 줄 형식으로 표시한다.
+# 해시 | 상대 시각 | 제목 | 작성자 | 브랜치·태그 순서다.
+[log]
+	date = relative
+	decorate = auto
+
+[format]
+	pretty = tformat:%C(auto,yellow)%h%C(reset) %C(auto,cyan)%<(12,trunc)%ad%C(reset) %C(auto,bold)%s%C(reset) %C(auto,green)· %an%C(reset)%C(auto)%d%C(reset)
+
 [alias]
 	st = status
 	co = checkout
 	br = branch
 	ci = commit
 	unstage = reset HEAD --
-	last = log -1 HEAD
-	lg = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+	last = log -1
+	lg = log --graph --all --date-order
+	ll = log --stat

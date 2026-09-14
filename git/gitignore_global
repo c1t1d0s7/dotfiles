@@ -1,35 +1,46 @@
-### macOS System Files ###
+### macOS ###
 .DS_Store
 .AppleDouble
 .LSOverride
 
-# 파일 아이콘 (끝에 \r이 포함된 특수 파일 대응)
+# Finder 아이콘 파일(이름 끝에 제어 문자가 붙는 경우 포함)
 Icon?
 
-# 썸네일 캐시 및 인덱싱 데이터
+# 메타데이터·인덱스·휴지통
 ._*
-.Spotlight-V100
-.fseventsd
-
-# 휴지통 및 임시 항목
-.Trashes
-.TemporaryItems
-.DocumentRevisions-V100
+.Spotlight-V100/
+.fseventsd/
+.Trashes/
+.TemporaryItems/
+.DocumentRevisions-V100/
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 
-### Network & External Storage (AFP/SMB) ###
+# 네트워크·외장 볼륨
 .AppleDB
 .AppleDesktop
-Network Trash Folder
-Temporary Items
+Network Trash Folder/
+Temporary Items/
 .apdisk
 
-### Development Tools (Common) ###
-# 에디터 및 빌드 시 발생하는 임시 파일
+### Windows ###
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+
+### Linux / Unix ###
+.directory
+.Trash-*/
+lost+found/
+.nfs*
+.fuse_hidden*
+
+### Editor / Local Tools ###
 *.swp
-*.out
-*.app
-
-
+*.swo
+*~
 **/.claude/settings.local.json
