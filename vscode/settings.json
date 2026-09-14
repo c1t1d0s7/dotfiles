@@ -1,7 +1,7 @@
 // User settings. Extensions are managed in Brewfile.
 {
     // Fonts.
-    "editor.fontFamily": "'MesloLGM Nerd Font', 'Sarasa Mono K'",
+    "editor.fontFamily": "'JetBrainsMono Nerd Font', 'Sarasa Mono K'",
     "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font', 'Sarasa Mono K'",
     // Keep text sizes consistent.
     "editor.fontSize": 12,

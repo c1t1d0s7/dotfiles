@@ -57,7 +57,6 @@ git clone https://github.com/c1t1d0s7/dotfiles.git
 cd dotfiles
 ./install_linux.sh --dry
 ./install_linux.sh
-chsh -s "$(command -v zsh)"  # Log out once after changing the login shell.
 ```
 
 Linux에서는 `install_linux.sh`가 배포판을 감지해 빠진 `git`, `zsh`, `neovim`, `fzf`, `curl`,
@@ -68,8 +67,10 @@ Oh My Posh는 [공식 Linux 설치 스크립트](https://ohmyposh.dev/docs/insta
 `~/.local/bin/oh-my-posh`에 설치합니다. `Brewfile`, Ghostty, VS Code 설정은 적용하지 않습니다.
 프롬프트 아이콘을 표시하려면 접속하는 터미널에 Nerd Font가 필요합니다.
 
-Linux의 기본 로그인 셸은 보통 Bash이므로 zsh도 설치 대상입니다. 다만 로그인 셸은 사용자
-계정 설정이어서 스크립트가 자동으로 바꾸지 않고, 설치 후 실행할 `chsh` 명령만 안내합니다.
+Linux의 기본 로그인 셸은 보통 Bash이므로 zsh도 설치 대상입니다. 설치가 끝나면 로그인 셸을
+zsh로 변경할지 `[Y/n]`으로 확인하며 기본값은 변경입니다. 스크립트 자체는 `sudo` 없이 실행하고,
+선택하면 `chsh` 단계만 sudo로 처리합니다. 적용하려면 로그아웃 후 다시 로그인해야 합니다.
+비대화형 환경에서는 변경하지 않고 직접 실행할 명령을 출력합니다.
 
 git 커밋 신원(계정·이름·이메일)은 실행 중에 물어봅니다. 미리 파일이나 환경변수로
 넘기려면 [git 신원 설정](#git-신원-설정)을 참고하세요.
@@ -107,8 +108,7 @@ oh-my-posh/
 └── config.omp.json         → ~/.config/oh-my-posh/config.omp.json
 git/
 ├── gitconfig               → ~/.config/git/config
-├── gitignore_global        → ~/.config/git/ignore
-└── gitmessage              → ~/.config/git/message   커밋 템플릿
+└── gitignore_global        → ~/.config/git/ignore
 ghostty/config.ghostty       → ~/.config/ghostty/       macOS에서만
 vscode/                                                macOS에서만
 ├── settings.json           → ~/Library/Application Support/Code/User/settings.json
@@ -176,7 +176,6 @@ ghostty는 설정을 **두 곳에서 읽고 나중 것이 이깁니다** — XDG
 |---|---|
 | `config` | `~/.gitconfig`와 **둘 다 읽히고** `~/.gitconfig`가 이깁니다 |
 | `ignore` | `core.excludesFile`의 기본값 — 설정 줄 자체가 필요 없습니다 |
-| `message` | 기본값이 없어 `commit.template`이 이 경로를 가리킵니다 |
 
 첫 줄이 중요합니다. **`~/.gitconfig`가 남아 있으면 여기 설정이 통째로 가려집니다.**
 그래서 설치 스크립트가 예전 위치의 파일들을 백업으로 치웁니다. 신원 파일은 버리지 않고

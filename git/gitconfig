@@ -30,7 +30,6 @@
 	colorMoved = default
 
 [commit]
-	template = ~/.config/git/message
 	verbose = true
 
 [branch]

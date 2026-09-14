@@ -80,7 +80,6 @@ FILES=(
   "oh-my-posh/config.omp.json:$OH_MY_POSH_DIR/config.omp.json"
   "git/gitconfig:$GIT_CONFIG_DIR/config"
   "git/gitignore_global:$GIT_CONFIG_DIR/ignore"
-  "git/gitmessage:$GIT_CONFIG_DIR/message"
 )
 
 if [[ "$PLATFORM" == macos ]]; then
@@ -318,7 +317,7 @@ migrate_git_to_xdg() {
     fi
   fi
 
-  for f in "$HOME/.gitconfig" "$HOME/.gitignore_global" "$HOME/.gitmessage"; do
+  for f in "$HOME/.gitconfig" "$HOME/.gitignore_global"; do
     [[ -e "$f" || -L "$f" ]] || continue
     if $DRY; then
       echo "  [dry] move to backup: $f"

@@ -70,7 +70,7 @@ run_as_root() {
   elif command -v sudo >/dev/null; then
     sudo "$@"
   else
-    echo "sudo is required to install packages" >&2
+    echo "sudo is required for this operation" >&2
     exit 1
   fi
 }
@@ -173,6 +173,58 @@ install_oh_my_posh() {
   echo "  install: oh-my-posh"
 }
 
+configure_login_shell() {
+  local target_user zsh_bin current_shell reply=""
+  target_user="$(id -un)"
+  zsh_bin="$(command -v zsh || true)"
+
+  if [[ -z "$zsh_bin" ]]; then
+    echo "zsh was not found; the login shell was not changed" >&2
+    return 1
+  fi
+
+  current_shell="$(getent passwd "$target_user" 2>/dev/null | awk -F: '{print $7}' || true)"
+  if [[ "$current_shell" == "$zsh_bin" ]]; then
+    echo "login shell: $zsh_bin"
+    return 0
+  fi
+
+  if $DRY; then
+    echo "[dry] ask to change the login shell for $target_user to $zsh_bin"
+    return 0
+  fi
+
+  if [[ ! -r /etc/shells ]] || ! grep -Fxq "$zsh_bin" /etc/shells; then
+    echo "$zsh_bin is not listed in /etc/shells; the login shell was not changed" >&2
+    return 1
+  fi
+
+  if ! command -v chsh >/dev/null; then
+    echo "chsh was not found; the login shell was not changed" >&2
+    return 1
+  fi
+
+  if [[ ! -t 0 ]]; then
+    echo "Run this yourself to make zsh your login shell:"
+    echo "  sudo chsh -s $zsh_bin $target_user"
+    return 0
+  fi
+
+  if ! read -r -p "Make $zsh_bin the login shell for $target_user? [Y/n] " reply; then
+    echo "login shell unchanged"
+    return 0
+  fi
+  case "$reply" in
+    ""|[Yy]*)
+      run_as_root chsh -s "$zsh_bin" "$target_user"
+      echo "login shell changed to $zsh_bin; log out and back in to apply"
+      ;;
+    *)
+      echo "login shell unchanged"
+      ;;
+  esac
+}
+
 echo "linux packages:"
 install_linux_packages
 echo
@@ -185,9 +237,5 @@ DOTFILES_INSTALL_TARGET=linux \
 DOTFILES_INSTALL_COMMAND=./install_linux.sh \
   "$DOTFILES/install_common.sh" "${ARGS[@]}"
 
-ZSH_BIN="$(command -v zsh || printf '/usr/bin/zsh')"
-if [[ "${SHELL:-}" != "$ZSH_BIN" ]]; then
-  echo
-  echo "Run this yourself to make zsh your login shell:"
-  echo "  chsh -s $ZSH_BIN"
-fi
+echo
+configure_login_shell
