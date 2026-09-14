@@ -15,10 +15,12 @@
 
 [pull]
 	rebase = true
+
 [rebase]
 	autoSquash = true
 	autoStash = true
 	missingCommitsCheck = warn
+
 [rerere]
 	enabled = true
 
