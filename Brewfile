@@ -80,8 +80,6 @@ brew "hashicorp/tap/packer"
 brew "hashicorp/tap/terraform"
 # Display management tool
 cask "betterdisplay"
-# Anthropic's official Claude AI desktop app
-cask "claude"
 # Universal database tool and SQL client
 cask "dbeaver-community"
 # Voice and text chat software
@@ -95,16 +93,12 @@ cask "font-sarasa-gothic"
 cask "ghostty"
 # Web browser
 cask "google-chrome"
-# Development environment
-cask "hashicorp/tap/hashicorp-vagrant"
 # Dedicated scratchpad for developers
 cask "heynote"
 # Free and open-source media player
 cask "iina"
 # Tool for multi-language users
 cask "input-source-pro"
-# Terminal emulator as alternative to Apple's Terminal app
-cask "iterm2"
 # Menu bar calendar
 cask "itsycal"
 # Keyboard customiser
@@ -137,7 +131,6 @@ cask "darrylmorley/whatcable/whatcable", trusted: true
 cask "zoom"
 vscode "adpyke.codesnap"
 vscode "amazonwebservices.aws-toolkit-vscode"
-vscode "anthropic.claude-code"
 vscode "anthropic.url-content-opener"
 vscode "bierner.markdown-mermaid"
 vscode "donjayamanne.githistory"
