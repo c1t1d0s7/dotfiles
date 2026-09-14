@@ -7,6 +7,6 @@
         "args": {
             "text": "\\\r"
         },
-        "when": "terminalFocus"
+        "when": "terminalFocus && !isWindows"
     }
 ]
